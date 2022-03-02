@@ -1,4 +1,0 @@
-Pong_DEEC
-
-
-Local

@@ -86,7 +86,7 @@ Opponent_color = (191, 39, 28)
 
 #Controller Parameters
 filter_components = 3 #Maior reduz a responsividade
-Controller_Kp = 97 #"Velocidade" que as barras se movem
+Controller_Kp = 0.35 #"Velocidade" que as barras se movem
 
 
 def event():

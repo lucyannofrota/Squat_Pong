@@ -36,15 +36,10 @@ rectcam = imgcam.get_rect()
 rectcam.x, rectcam.y = game.Screen_Width / 2 + 7.5 * cam_size[0] / 2, game.Screen_Height / 2 - 6.5 * cam_size[1] / 2
 
 # Webcam
-# cap = cv2.VideoCapture(0)
-
-
-# stream = args.get("video", False)
 
 def get_inputs(scale = 0.7, hscale=(-1,-1), detector = []):
     frame = vid_stream.read()
     hands = []
-    # hscale = (1,1)
     res = (1920*0.7,1080*0.7)
 
     if(hscale[0] == -1):
@@ -56,10 +51,8 @@ def get_inputs(scale = 0.7, hscale=(-1,-1), detector = []):
     if detector == []:
         frame = cv2.resize(frame, (round(game.Screen_Width*scale), round(game.Screen_Height*scale)), interpolation=cv2.INTER_AREA)
     else:
-        # frame = cv2.flip(frame, 1)
         hands, frame = detector.findHands(frame, flipType=False)
         frame = cv2.resize(frame, (round(res[0]), round(res[1])), interpolation=cv2.INTER_AREA)
-        # print(hscale)
     return frame, hands, hscale
 
 
@@ -70,7 +63,7 @@ window = pygame.display.set_mode((game.Screen_Width, game.Screen_Height))
 pygame.display.set_caption("Images/Pong Arcade Game")
 
 # Initialize Clock for FPS
-fps = 120
+fps = 60
 clock = pygame.time.Clock()
 
 

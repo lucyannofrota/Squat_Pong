@@ -23,9 +23,14 @@ main
 
 overlay: 0-2 ms
 
+rescale: 10-15 ms
+
+hand detector:  30 ms
+
 
 capture 1
     33 (ms)
 
 capture 2
-    
+    8 (ms)
+

@@ -8,8 +8,11 @@ import auxFuncs as myAux
 import game
 import sys
 import os
+import utility
+
 
 pygame.init()
+
 # BackGround Sound
 mixer.music.load('Sounds/BoxCat-Games-Epic-Song.mp3')
 mixer.music.play(-1)
@@ -26,10 +29,12 @@ cam_size = [200, 150]
 
 state: 0
 
-# Webcam
-cap = cv2.VideoCapture(0)
-cap.set(3, 1280)  # width
-cap.set(4, 720)  # height
+# Detector
+detector = HandDetector(detectionCon=0.8, maxHands=2)
+
+# Webcam inputs
+Winputs = utility.webcamInputs(scale=0.7,windowRes=(game.Screen_Width,game.Screen_Height),detector=detector)
+subSampling = 3
 
 window = pygame.display.set_mode((game.Screen_Width, game.Screen_Height))
 pygame.display.set_caption("Images/Pong Arcade Game")
@@ -83,19 +88,12 @@ speed = 10
 startTime = t.time()
 totalTime = 18000
 
-# Detector
-detector = HandDetector(detectionCon=0.8, maxHands=2)
-
 # Main loop
 start = True
 ctime = []
 ctime_mean = 0
 tcount = 0
 
-
-
-success, img = cap.read()
-img = cv2.flip(img, 1)
 ct = 0
 while start:
     ctime_i = t.time_ns()
@@ -121,22 +119,10 @@ while start:
     else:
         index = sum([len(files) for r, d, files in os.walk("Pictures")])
         # OpenCV
-
-        if(ct >= 20):
-            success, img = cap.read()
-            img = cv2.flip(img, 1)
-            ct = 0
-        ct += 1
-        # print((game.Screen_Width, game.Screen_Height))
-        img = cv2.resize(img, (game.Screen_Width, game.Screen_Height), interpolation=cv2.INTER_AREA)
+        img, hands, hscale = Winputs.get_inputs(subSampling)
         if(tcount >= 60):
-            # ctime_mean
             print("Exec Time (main): "+str(round((sum(ctime)/60)/(1000*1000)))+" (ms)")
             ctime.pop(0)
-    
-        # hands, img = detector.findHands(img, flipType=False)
-        hands = []
-        # img = flip
 
         imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         imgRGB = np.rot90(imgRGB)
@@ -145,23 +131,23 @@ while start:
         frame = pygame.transform.flip(frame, True, False)
 
         window.blit(frame, (0, 0))
-        # window.blit(imgPlay, rectPlay)
-        # window.blit(imgLogo, rectLogo)
-        # window.blit(imgDeec, rectDeec)
-        # window.blit(imgAtari, rectAtari)
-        # window.blit(imgNote, rectNote)
-        # window.blit(imgleft, rectleft)
-        # window.blit(imgright, rectright)
-        # window.blit(imgcam, rectcam)
+        window.blit(imgPlay, rectPlay)
+        window.blit(imgLogo, rectLogo)
+        window.blit(imgDeec, rectDeec)
+        window.blit(imgAtari, rectAtari)
+        window.blit(imgNote, rectNote)
+        window.blit(imgleft, rectleft)
+        window.blit(imgright, rectright)
+        window.blit(imgcam, rectcam)
 
         if hands:
             for hand in hands:
                 x, y, c = hand['lmList'][8]
 
                 if hand['type'] == 'Right':
-                    pygame.draw.circle(window, (148, 25, 134), (x, y), 15)
+                    pygame.draw.circle(window, (148, 25, 134), (hscale[0]*x, hscale[1]*y), 15)
                 else:
-                    pygame.draw.circle(window, (191, 39, 28), (x, y), 15)
+                    pygame.draw.circle(window, (191, 39, 28), (hscale[0]*x, hscale[1]*y), 15)
                 if rectPlay.collidepoint(x, y):
                     game.startgame(window, cap)
                 if rectcam.collidepoint(x, y):

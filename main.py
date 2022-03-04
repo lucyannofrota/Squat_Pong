@@ -119,14 +119,13 @@ while start:
     else:
         index = sum([len(files) for r, d, files in os.walk("Pictures")])
         # OpenCV
-        img, hands, hscale = Winputs.get_inputs(subSampling)
+        img, hands, hscale = Winputs.get_inputs(subSampling=subSampling,menu=True)
         if(tcount >= 60):
-            print("Exec Time (main): "+str(round((sum(ctime)/60)/(1000*1000)))+" (ms)")
+            # print("Exec Time (main): "+str(round((sum(ctime)/60)/(1000*1000)))+" (ms)")
             ctime.pop(0)
 
         imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         imgRGB = np.rot90(imgRGB)
-        # imgRGB_2 = (66, 207, 223)
         frame = pygame.surfarray.make_surface(imgRGB).convert()
         frame = pygame.transform.flip(frame, True, False)
 
@@ -144,15 +143,18 @@ while start:
             for hand in hands:
                 x, y, c = hand['lmList'][8]
 
+                x = hscale[0]*x
+                y = hscale[1]*y
+
                 if hand['type'] == 'Right':
-                    pygame.draw.circle(window, (148, 25, 134), (hscale[0]*x, hscale[1]*y), 15)
+                    pygame.draw.circle(window, (148, 25, 134), (x, y), 15)
                 else:
-                    pygame.draw.circle(window, (191, 39, 28), (hscale[0]*x, hscale[1]*y), 15)
+                    pygame.draw.circle(window, (191, 39, 28), (x, y), 15)
                 if rectPlay.collidepoint(x, y):
-                    game.startgame(window, cap)
+                    game.startgame(window, Winputs, subSampling)
                 if rectcam.collidepoint(x, y):
                     if index != 0:
-                        myAux.pic_screen(cap, window)
+                        myAux.pic_screen(Winputs, window, subSampling)
 
     # Update Display
     pygame.display.update()

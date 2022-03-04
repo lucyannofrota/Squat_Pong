@@ -7,6 +7,8 @@ from google.protobuf.json_format import MessageToDict
 import pyautogui
 import sys
 
+import utility
+
 pygame.init()
 Screen_Width, Screen_Height = pyautogui.size()
 window = pygame.display.set_mode((Screen_Width, Screen_Height))
@@ -122,14 +124,17 @@ def controller_filter(list,val):
     return sum(list)/len(list)
 
 
-def startgame(screen, camera):
+def startgame(screen, Winputs, subSampling):
     state: 1
     pygame.time.delay(500)
 
     #####################
     #   GET FIRST FRAME #
     #####################
-    (retval_original, h_original,w_original,c_original,frame_original) = myAux.getNewFrameOpenCV(camera, Screen_Width, Screen_Height)
+
+
+    img, hands, hscale = Winputs.get_inputs(subSampling)
+    # (_, h_original,w_original,_,_) = myAux.getNewFrameOpenCV(camera, Screen_Width, Screen_Height)
     w_original,h_original = pygame.display.get_surface().get_size()
 
     #############
@@ -204,10 +209,10 @@ def startgame(screen, camera):
         #####################
         #   GET NEW FRAME   #
         #####################
-        (retval, frameHeight, frameWidth, frameChannels, frameCV) = myAux.getNewFrameOpenCV(camera, Screen_Width, Screen_Height)
-        if not retval:
-            break
-        # frameCV = cv2.resize(frameCV, (w_original, h_original), interpolation = cv2.INTER_AREA)
+        # (retval, frameHeight, frameWidth, frameChannels, frameCV) = myAux.getNewFrameOpenCV(camera, Screen_Width, Screen_Height)
+        frameCV, hands, hscale = Winputs.get_inputs(subSampling)
+        # if not retval:
+        #     break
         frameCV_RGB = cv2.cvtColor(frameCV, cv2.COLOR_BGR2RGB)
 
         #################

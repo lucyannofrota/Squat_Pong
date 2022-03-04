@@ -71,6 +71,7 @@ imgmenu = pygame.image.load('Images/menu.png').convert_alpha()
 rectmenu = imgmenu.get_rect()
 rectmenu.x, rectmenu.y = Screen_Width/2 - menu_size[0]/2, Screen_Height/2 - 10*menu_size[1]/2
 
+
 # separação
 imgsep = pygame.image.load('Images/sep_op1.png').convert_alpha()
 rectsep = imgsep.get_rect()

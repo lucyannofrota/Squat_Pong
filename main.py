@@ -12,8 +12,9 @@ import game
 import sys
 import os
 
-if (sys.argv[1] == '--cam' and sys.argv[2] == '1'):
-    var = 'https://192.168.1.118:8080/video'
+if(len(sys.argv) > 1):
+    if (sys.argv[1] == '--cam' and sys.argv[2] == '1'):
+        var = 'https://192.168.1.118:8080/video'
 else:
     var = 0
 

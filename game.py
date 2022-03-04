@@ -207,7 +207,7 @@ def startgame(screen, camera):
         (retval, frameHeight, frameWidth, frameChannels, frameCV) = myAux.getNewFrameOpenCV(camera, Screen_Width, Screen_Height)
         if not retval:
             break
-        frameCV = cv2.resize(frameCV, (w_original, h_original), interpolation = cv2.INTER_AREA)
+        # frameCV = cv2.resize(frameCV, (w_original, h_original), interpolation = cv2.INTER_AREA)
         frameCV_RGB = cv2.cvtColor(frameCV, cv2.COLOR_BGR2RGB)
 
         #################

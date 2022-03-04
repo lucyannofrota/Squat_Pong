@@ -1,0 +1,31 @@
+main
+
+    all
+        66 (ms) 0 hands
+        80 (ms) 2 hands
+
+    no hand detector
+        36 (ms)
+        
+        no overlay
+            34 (ms)
+        
+            no resize
+                33 (ms)
+
+                no capture
+                    16 (ms)
+                
+            frames on 2
+                33 (ms)
+
+
+
+overlay: 0-2 ms
+
+
+capture 1
+    33 (ms)
+
+capture 2
+    

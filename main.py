@@ -88,7 +88,17 @@ detector = HandDetector(detectionCon=0.8, maxHands=2)
 
 # Main loop
 start = True
+ctime = []
+ctime_mean = 0
+tcount = 0
+
+
+
+success, img = cap.read()
+img = cv2.flip(img, 1)
+ct = 0
 while start:
+    ctime_i = t.time_ns()
     # Get Events
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -111,10 +121,22 @@ while start:
     else:
         index = sum([len(files) for r, d, files in os.walk("Pictures")])
         # OpenCV
-        success, img = cap.read()
+
+        if(ct >= 20):
+            success, img = cap.read()
+            img = cv2.flip(img, 1)
+            ct = 0
+        ct += 1
+        # print((game.Screen_Width, game.Screen_Height))
         img = cv2.resize(img, (game.Screen_Width, game.Screen_Height), interpolation=cv2.INTER_AREA)
-        flip = cv2.flip(img, 1)
-        hands, img = detector.findHands(flip, flipType=False)
+        if(tcount >= 60):
+            # ctime_mean
+            print("Exec Time (main): "+str(round((sum(ctime)/60)/(1000*1000)))+" (ms)")
+            ctime.pop(0)
+    
+        # hands, img = detector.findHands(img, flipType=False)
+        hands = []
+        # img = flip
 
         imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         imgRGB = np.rot90(imgRGB)
@@ -123,14 +145,14 @@ while start:
         frame = pygame.transform.flip(frame, True, False)
 
         window.blit(frame, (0, 0))
-        window.blit(imgPlay, rectPlay)
-        window.blit(imgLogo, rectLogo)
-        window.blit(imgDeec, rectDeec)
-        window.blit(imgAtari, rectAtari)
-        window.blit(imgNote, rectNote)
-        window.blit(imgleft, rectleft)
-        window.blit(imgright, rectright)
-        window.blit(imgcam, rectcam)
+        # window.blit(imgPlay, rectPlay)
+        # window.blit(imgLogo, rectLogo)
+        # window.blit(imgDeec, rectDeec)
+        # window.blit(imgAtari, rectAtari)
+        # window.blit(imgNote, rectNote)
+        # window.blit(imgleft, rectleft)
+        # window.blit(imgright, rectright)
+        # window.blit(imgcam, rectcam)
 
         if hands:
             for hand in hands:
@@ -151,6 +173,8 @@ while start:
 
     # Set FPS
     clock.tick(fps)
+    ctime.append(t.time_ns() - ctime_i)
+    tcount += 1
 
 cap.release()
 cv2.destroyAllWindows()

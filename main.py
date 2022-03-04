@@ -1,4 +1,7 @@
+from distutils.log import error
+from msilib.schema import Class
 import time as t
+from turtle import left
 import cv2
 import numpy as np
 import pygame
@@ -10,6 +13,11 @@ import sys
 import os
 import utility
 
+if(len(sys.argv) > 1):
+    if (sys.argv[1] == '--cam' and sys.argv[2] == '1'):
+        camSrc = 'https://192.168.1.118:8080/video'
+else:
+    camSrc = 0
 
 pygame.init()
 
@@ -33,7 +41,7 @@ state: 0
 detector = HandDetector(detectionCon=0.8, maxHands=2)
 
 # Webcam inputs
-Winputs = utility.webcamInputs(scale=0.7,windowRes=(game.Screen_Width,game.Screen_Height),detector=detector)
+Winputs = utility.webcamInputs(src=camSrc,scale=0.7,windowRes=(game.Screen_Width,game.Screen_Height),detector=detector)
 subSampling = 3
 
 window = pygame.display.set_mode((game.Screen_Width, game.Screen_Height))
@@ -70,18 +78,66 @@ rectNote = imgNote.get_rect()
 rectNote.x, rectNote.y = game.Screen_Width / 2 - note_size[0] / 2, game.Screen_Height / 2 + 15 * note_size[1] / 2
 
 # note about hands
-imgleft = pygame.image.load('Images/left_player.png').convert_alpha()
+imgleft = pygame.image.load('Images/purple.png').convert_alpha()
 rectleft = imgleft.get_rect()
-rectleft.x, rectleft.y = game.Screen_Width / 2 - 3 * left_size[0] / 2, game.Screen_Height / 2 - 1.1 * left_size[1] / 2
+rectleft.x, rectleft.y = game.Screen_Width / 2 - 2.5* left_size[0] / 2, game.Screen_Height / 2 - 2 * left_size[1] / 2
 
-imgright = pygame.image.load('Images/right_player.png').convert_alpha()
+imgright = pygame.image.load('Images/red.png').convert_alpha()
 rectright = imgright.get_rect()
-rectright.x, rectright.y = game.Screen_Width / 2 + 1 * right_size[0] / 2, game.Screen_Height / 2 - 1.1 * right_size[1] / 2
+rectright.x, rectright.y = game.Screen_Width / 2 + 1.5 * right_size[0] / 2, game.Screen_Height / 2 - 2 * right_size[1] / 2
 
 # icone fotos
 imgcam = pygame.image.load('Images/cam.png').convert_alpha()
 rectcam = imgcam.get_rect()
 rectcam.x, rectcam.y = game.Screen_Width / 2 + 7.5 * cam_size[0] / 2, game.Screen_Height / 2 - 6.5 * cam_size[1] / 2
+
+# squat gif
+def loadimgs(folder_name, direction, gif):
+    # Used to load multiple images from folder and store them in the variable "gif"
+    for item in range(1,21):
+        if(item < 10):
+            squat_img = pygame.image.load("Images/" + folder_name + "/Image_"+str(direction)+".00"+str(item)+".png").convert_alpha()
+        else:
+            squat_img = pygame.image.load("Images/"+folder_name+"/Image_"+str(direction)+".0"+str(item)+".png").convert_alpha()
+        gif.append(squat_img)
+
+class squatGif(pygame.sprite.Sprite):
+    # Used to animate gif
+    def __init__(self, position, imgs):
+        super(squatGif, self).__init__()
+        size = (50,30)
+        self.rect = pygame.Rect(position, size)
+        self.index = 0
+        self.images= imgs
+        self.image = imgs[self.index]
+
+        self.animation_frames = 6
+        self.current_frame = 0
+
+    def update(self):
+        self.current_frame += 1
+        if self.current_frame >= self.animation_frames:
+            self.current_frame = 0
+            self.index = (self.index + 1) % len(self.images)
+            self.image = self.images[self.index]
+
+# right side squat gif
+squat_right = imgcam.get_rect()
+squat_right.x, squat_right.y = game.Screen_Width/2 + 1.2*right_size[0]/2, game.Screen_Height/2 - 0.5*right_size[1]/2
+
+mygif = []
+loadimgs("Image_right", "right",mygif)
+squat_gif = squatGif(position=(squat_right.x, squat_right.y), imgs=mygif)
+my_sprites = pygame.sprite.Group(squat_gif)
+
+#left side squat gif
+squat_L = imgcam.get_rect()
+squat_L.x, squat_L.y = game.Screen_Width/2 - 2.8*left_size[0]/2, game.Screen_Height/2 - 0.5*left_size[1]/2
+
+mygif_L = []
+loadimgs("Image_left","left", mygif_L)
+squat_gif_L = squatGif(position=(squat_L.x, squat_L.y), imgs=mygif_L)
+my_sprites_L = pygame.sprite.Group(squat_gif_L)
 
 # Variables
 speed = 10
@@ -139,6 +195,11 @@ while start:
         window.blit(imgright, rectright)
         window.blit(imgcam, rectcam)
 
+        my_sprites.update()
+        my_sprites_L.update()
+
+        my_sprites.draw(window)
+        my_sprites_L.draw(window)
         if hands:
             for hand in hands:
                 x, y, c = hand['lmList'][8]
@@ -150,11 +211,11 @@ while start:
                     pygame.draw.circle(window, (148, 25, 134), (x, y), 15)
                 else:
                     pygame.draw.circle(window, (191, 39, 28), (x, y), 15)
-                if rectPlay.collidepoint(x, y):
-                    game.startgame(window, Winputs, subSampling)
-                if rectcam.collidepoint(x, y):
-                    if index != 0:
-                        myAux.pic_screen(Winputs, window, subSampling)
+                # if rectPlay.collidepoint(x, y):
+                #     game.startgame(window, Winputs, subSampling)
+                # if rectcam.collidepoint(x, y):
+                #     if index != 0:
+                #         myAux.pic_screen(Winputs, window, subSampling)
 
     # Update Display
     pygame.display.update()

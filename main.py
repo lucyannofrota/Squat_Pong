@@ -5,7 +5,7 @@ from turtle import left
 import cv2
 import numpy as np
 import pygame
-from cvzone.HandTrackingModule import HandDetector
+# from cvzone.HandTrackingModule import HandDetector
 from pygame import *
 import auxFuncs as myAux
 import game
@@ -38,10 +38,10 @@ cam_size = [200, 150]
 state: 0
 
 # Detector
-detector = HandDetector(detectionCon=0.8, maxHands=2)
+# detector = HandDetector(detectionCon=0.8, maxHands=2)
 
 # Webcam inputs
-Winputs = utility.webcamInputs(src=camSrc,scale=0.7,windowRes=(game.Screen_Width,game.Screen_Height),detector=detector)
+Winputs = utility.webcamInputs(src=camSrc,scale=0.7,windowRes=(game.Screen_Width,game.Screen_Height),detector='Menu')
 subSampling = 3
 
 window = pygame.display.set_mode((game.Screen_Width, game.Screen_Height))
@@ -175,7 +175,7 @@ while start:
     else:
         index = sum([len(files) for r, d, files in os.walk("Pictures")])
         # OpenCV
-        img, hands, hscale = Winputs.get_inputs(subSampling=subSampling,menu=True)
+        img, hands = Winputs.get_inputs(subSampling=subSampling)
         if(tcount >= 60):
             # print("Exec Time (main): "+str(round((sum(ctime)/60)/(1000*1000)))+" (ms)")
             ctime.pop(0)
@@ -202,20 +202,22 @@ while start:
         my_sprites_L.draw(window)
         if hands:
             for hand in hands:
-                x, y, c = hand['lmList'][8]
+                # x, y, c = hand['lmList'][8]
 
-                x = hscale[0]*x
-                y = hscale[1]*y
+                # x = hscale[0]*x
+                # y = hscale[1]*y
 
-                if hand['type'] == 'Right':
-                    pygame.draw.circle(window, (148, 25, 134), (x, y), 15)
+                if hand != (-1,-1):
+                    pygame.draw.circle(window, (191, 39, 28), hand, 15)
                 else:
-                    pygame.draw.circle(window, (191, 39, 28), (x, y), 15)
-                # if rectPlay.collidepoint(x, y):
-                #     game.startgame(window, Winputs, subSampling)
-                # if rectcam.collidepoint(x, y):
-                #     if index != 0:
-                #         myAux.pic_screen(Winputs, window, subSampling)
+                    if hand != (-1,-1):
+                        pygame.draw.circle(window, (148, 25, 134), hand, 15)
+                    
+                if rectPlay.collidepoint(hand[0], hand[1]):
+                    game.startgame(window, Winputs.vid_stream, subSampling)
+                if rectcam.collidepoint(hand[0], hand[1]):
+                    if index != 0:
+                        myAux.pic_screen(Winputs.vid_stream, window, subSampling)
 
     # Update Display
     pygame.display.update()

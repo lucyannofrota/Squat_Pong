@@ -126,16 +126,17 @@ def Text(screen, winner_x, winner_y, loser_x, loser_y):
 #################
 
 
-def transform_cap(img, screen):
+def transform_cap(img, screen, offset=(0,0)):
     imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     imgRGB = np.rot90(imgRGB)
     frame = pygame.surfarray.make_surface(imgRGB).convert()
     frame = pygame.transform.flip(frame, True, False)
-    screen.blit(frame, (0, 0))
+    screen.blit(frame, offset)
 
 
-def define_winner(vid_stream, screen, coord_x_crown, coord_y_crown, coord_x_rect, coord_y_rect, result,subSampling=0):
-    Winputs = webcamInputs(vid_stream=vid_stream,scale=0.7,windowRes=(game.Screen_Width,game.Screen_Height),detector='Menu')
+def define_winner(in_Winputs, screen, coord_x_crown, coord_y_crown, coord_x_rect, coord_y_rect, result):
+    Winputs = webcamInputs(webcamInputs=in_Winputs,vid_stream=in_Winputs.vid_stream,offset=in_Winputs.offset,subSampling=0,detector='Menu')
+    # Winputs = webcamInputs(webcamInputs=in_Winputs,detector='Menu')
     running = True
     count = 0
     start_time = t.time()
@@ -144,9 +145,9 @@ def define_winner(vid_stream, screen, coord_x_crown, coord_y_crown, coord_x_rect
         # success, img = cap.read()
         # img = cv2.resize(img, (game.Screen_Width, game.Screen_Height))
         # img = cv2.flip(img, 1)
-        img, hands = Winputs.get_inputs(subSampling=subSampling)
+        img, hands = Winputs.get_inputs()
 
-        transform_cap(img, screen)
+        transform_cap(img, screen, Winputs.offset)
 
         # Crown e Joker
         Crown = pygame.image.load('Images/Crown.png').convert_alpha()
@@ -181,15 +182,18 @@ def define_winner(vid_stream, screen, coord_x_crown, coord_y_crown, coord_x_rect
         screen.blit(Joker, Joker_coord)
         screen.blit(Tears, Tears_coord)
 
-        if count % 2 == 0:
-            hands, img = detector.findHands(img, flipType=False)
-            if hands:
-                for hand in hands:
-                    x, y, c = hand['lmList'][8]
-                    pygame.draw.circle(screen, (255, 0, 0), (x, y), 15)
-                    if Pic_coord.collidepoint(x, y):
-                        TakePic()
-                        running = False
+        if hands:
+            for hand in hands:
+                if hand != (-1,-1):
+                        pygame.draw.circle(screen, (191, 39, 28), hand, 15)
+                else:
+                    if hand != (-1,-1):
+                        pygame.draw.circle(screen, (148, 25, 134), hand, 15)
+                        
+                    if Pic_coord.collidepoint(hand[0], hand[1]):
+                            TakePic()
+                            running = False
+        # print("Tick")
         screen.blit(Pic, Pic_coord)
         pygame.display.update()
         count += 1
@@ -198,13 +202,13 @@ def define_winner(vid_stream, screen, coord_x_crown, coord_y_crown, coord_x_rect
             break
 
 
-def winner_screen(vid_stream, screen, result, subSampling=0):
+def winner_screen(screen, in_Winputs, result):
     # Player A Ganha
     if result == 1:
-        define_winner(vid_stream, screen, game.Screen_Width / 8, 0, game.Screen_Width / 2.3, game.Screen_Height / 1.5, result)
+        define_winner(in_Winputs, screen, game.Screen_Width / 8, 0, game.Screen_Width / 2.3, game.Screen_Height / 1.5, result)
     # Player B Ganha
     else:
-        define_winner(vid_stream, screen, game.Screen_Width / 1.6, 0, game.Screen_Width / 2.3, game.Screen_Height / 1.5, result)
+        define_winner(in_Winputs, screen, game.Screen_Width / 1.6, 0, game.Screen_Width / 2.3, game.Screen_Height / 1.5, result)
 
 
 def showFPS(prev_frame_time, new_frame_time):
@@ -233,13 +237,33 @@ def frameCV2Py(frame):
 
 
 class webcamInputs:
-    def __init__(self,vid_stream=[],src=0,scale=0.7,windowRes=(1920,1080),detector='Menu'):
+    def __init__(self,webcamInputs=[],vid_stream=[],subSampling=0,src=0,scale=0.7,windowRes=(1920,1080),offset=(0,0),detector='Menu'):
+        if(webcamInputs != []):
+            self.vid_stream=webcamInputs.vid_stream
+            self.scale=webcamInputs.scale
+            self.windowRes=webcamInputs.windowRes
+            self.offset=webcamInputs.offset
+            self.detector=webcamInputs.detector
+            self.subSampling=webcamInputs.subSampling
+
+            if(self.windowRes != (1920,1080)):
+                self.windowRes = windowRes
+            if(self.scale != 0.7):
+                self.scale = scale
+            if(self.offset != (0,0)):
+                self.offset = offset
+            if(self.subSampling != 0):
+                self.subSampling = subSampling
+        else:
+            self.windowRes = windowRes
+            self.scale = scale
+            self.offset = offset
+            self.subSampling = subSampling
+
         if(vid_stream == []):
             self.vid_stream = VideoStream(src=src).start()
         else:
             self.vid_stream = vid_stream
-        self.windowRes = windowRes
-        self.scale = scale
 
 
         self.outRes = (round(self.windowRes[0]*scale),round(self.windowRes[1]*scale))
@@ -262,7 +286,7 @@ class webcamInputs:
                 self.mp_hands = mp.solutions.hands
                 self.detector = self.mp_hands.Hands(model_complexity=0, min_detection_confidence=0.3, min_tracking_confidence=0.3)
 
-        self.subSampCounter = 0
+        self.subSampCounter = self.subSampling
 
         self.l_frame = []
         self.l_detected = []
@@ -270,8 +294,8 @@ class webcamInputs:
     # def GameHand():
 
 
-    def get_inputs(self,subSampling=0):
-        if(self.subSampCounter >= (subSampling-1) or self.l_frame == []):
+    def get_inputs(self):
+        if(self.subSampCounter <= (self.subSampling-1) or self.l_frame == []):
             frame = self.vid_stream.read()
 
             if self.detectorType == 'Menu':
@@ -284,14 +308,12 @@ class webcamInputs:
                     for hand in hands:
                         x, y, c = hand['lmList'][8]
                         if hand['type'] == 'Left':
-                            self.l_hands[0] = (x*self.hscale[0],y*self.hscale[1])
+                            self.l_hands[0] = (x*self.hscale[0]+self.offset[0],y*self.hscale[1]+self.offset[1])
                         else:
-                            self.l_hands[1] = (x*self.hscale[0],y*self.hscale[1])
+                            self.l_hands[1] = (x*self.hscale[0]+self.offset[0],y*self.hscale[1]+self.offset[1])
 
             else:
                 if self.detectorType == 'GameHand':
-                    # detected, frame = self.detector.findHands(frame, flipType=False)
-                    # frame = cv2.resize(frame, (self.outRes[0], self.outRes[1]), interpolation=cv2.INTER_AREA)
                     frameCV_RGB = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
                     results = self.detector.process(frameCV_RGB) # convert from BGR to RGB
@@ -304,24 +326,26 @@ class webcamInputs:
                                 # EACH POINTS OF THE HAND #
                                 for id, lm in enumerate(handLms.landmark):
                                     if id == self.mp_hands.HandLandmark.INDEX_FINGER_TIP:
-                                        x, y = self.windowRes[0]-int(lm.x*self.windowRes[0]), int(lm.y*self.windowRes[1])
-                                        self.l_hands[1] = (x*self.hscale[0],y*self.hscale[1])
+                                        x, y = self.outRes[0]-int(lm.x*self.outRes[0])+self.offset[0], int(lm.y*self.outRes[1])+self.offset[1]
+                                        self.l_hands[1] = (x,y)
                             # LEFT HAND #
                             if handedness_dict1['classification'][0]['label'] == 'Left':
                                 # EACH POINTS OF THE HAND #
                                 for id, lm in enumerate(handLms.landmark):
                                     if id == self.mp_hands.HandLandmark.INDEX_FINGER_TIP:
-                                        x, y = self.windowRes[0]-int(lm.x*self.windowRes[0]), int(lm.y*self.windowRes[1])
-                                        self.l_hands[0] = (x*self.hscale[0],y*self.hscale[1])
+                                        x, y = self.outRes[0]-int(lm.x*self.outRes[0])+self.offset[0], int(lm.y*self.outRes[1])+self.offset[1]
+                                        self.l_hands[0] = (x,y)
 
             frame = cv2.resize(frame, (self.outRes[0], self.outRes[1]), interpolation=cv2.INTER_AREA)
             self.l_frame = frame
-            self.subSampCounter = 0
+            self.subSampCounter = self.subSampling
 
-        self.subSampCounter += 1
+        self.subSampCounter -= 1
 
         if self.detectorType == 'Menu':
             return self.l_frame, self.l_hands
         else:
             if self.detectorType == 'GameHand':
+                #  GET NEW BACKGROUND  #
+                self.l_frame = frameCV2Py(self.l_frame)
                 return self.l_frame, self.l_hands

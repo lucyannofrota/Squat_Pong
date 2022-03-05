@@ -124,7 +124,7 @@ def controller_filter(list,val):
     return sum(list)/len(list)
 
 
-def startgame(screen, vid_stream, subSampling, scale=0.7):
+def startgame(screen, in_Winputs):
 
     state: 1
     pygame.time.delay(500)
@@ -134,17 +134,18 @@ def startgame(screen, vid_stream, subSampling, scale=0.7):
     #####################
 
 
-    # img, hands, hscale = Winputs.get_inputs(subSampling,menu=False)
-    # (_, h_original,w_original,_,_) = myAux.getNewFrameOpenCV(camera, Screen_Width, Screen_Height)
     w_original,h_original = pygame.display.get_surface().get_size()
-    # print("W_ori",w_original,h_original)
 
     #############
     #   PYGAME  #
     #############
     clock = pygame.time.Clock()
 
-    Winputs = myAux.webcamInputs(vid_stream=vid_stream,scale=scale,windowRes=(w_original,h_original),detector='GameHand')
+    
+    # Winputs = myAux.webcamInputs(vid_stream=in_Winputs.vid_stream,subSampling=0,src=0,scale=0.7,windowRes=(1920,1080),detector='GameHand')
+    Winputs = myAux.webcamInputs(webcamInputs=in_Winputs,vid_stream=in_Winputs.vid_stream,offset=in_Winputs.offset,subSampling=0,detector='GameHand')
+    # Winputs = myAux.webcamInputs(vid_stream=in_Winputs.vid_stream,subSampling=0,scale=in_Winputs.scale,windowRes=in_Winputs.windowRes,offset=in_Winputs.offset,detector='GameHand')
+    # Winputs = myAux.webcamInputs(vid_stream=in_Winputs.vid_stream,subSampling=0,src=0,scale=0.7,windowRes=(1920,1080),offset=in_Winputs.offset,detector='GameHand')
 
     #############
     #   PONG    #
@@ -186,6 +187,7 @@ def startgame(screen, vid_stream, subSampling, scale=0.7):
     getTicksLastFrame = pygame.time.get_ticks()
     running = True
     while running:
+        window.fill((0, 0, 0))
         event()
         #############
         #   FPS     #
@@ -204,37 +206,38 @@ def startgame(screen, vid_stream, subSampling, scale=0.7):
         #   GET NEW FRAME   #
         #####################
         # (retval, frameHeight, frameWidth, frameChannels, frameCV) = myAux.getNewFrameOpenCV(camera, Screen_Width, Screen_Height)
-        frameCV, hands = Winputs.get_inputs(subSampling)
+        frameCV, hands = Winputs.get_inputs()
         # frameCV_RGB = cv2.cvtColor(frameCV, cv2.COLOR_BGR2RGB)
 
 
         #########################
         #   GET NEW BACKGROUND  #
         #########################
-        framePy = myAux.frameCV2Py(frameCV)
-        screen.blit(framePy, (0, 0))
+        # framePy = myAux.frameCV2Py(frameCV)
+        # print(Winputs.offset)
+        screen.blit(frameCV, Winputs.offset)
 
         #################
         # PROCESS DATA  #
         #################
-        if hands[0][0] != -1:
+        if hands[1][1] != -1:
             raio_bola_left = 15
-            left = pygame.draw.circle(screen, Player_color, (hands[0][0], hands[0][1]), raio_bola_left)
+            left = pygame.draw.circle(screen, Player_color, (hands[1][0], hands[1][1]), raio_bola_left)
 
-        if hands[0][0] != -1:
+        if hands[0][1] != -1:
             raio_bola_right = 15
             right = pygame.draw.circle(screen, Opponent_color, (hands[0][0], hands[0][1]), raio_bola_right)
 
         #########################
         #   PLAYER CONTROLLERS  #
         #########################
-        if hands[0][1] == -1:
+        if hands[1][1] == -1:
             if len(player_y_list) != 0:
                 player_y = player_y_list[len(player_y_list)-1]
             else:
                 player_y = 100
         else:
-            player_y = hands[0][1]
+            player_y = hands[1][1]
 
         error_player = controller_filter(player_y_list, player_y) - (player.y + playerLength/2)
         command_player = Controller_Kp*error_player
@@ -303,14 +306,14 @@ def startgame(screen, vid_stream, subSampling, scale=0.7):
             pygame.mixer.Sound.play(Score)
 
         if  opponentScore >= 1:
-            myAux.winner_screen(vid_stream, window, 1,subSampling=subSampling)
+            myAux.winner_screen(window,in_Winputs, 1)
             pygame.display.update()
             pygame.event.pump()
             pygame.time.delay(1500)
             return
 
         if  playerScore >= 1:
-            myAux.winner_screen(vid_stream, window, 2,subSampling=subSampling)
+            myAux.winner_screen(window, in_Winputs, 2)
             pygame.display.update()
             pygame.event.pump()
             pygame.time.delay(1500)

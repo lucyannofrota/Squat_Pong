@@ -7,11 +7,11 @@ import numpy as np
 import pygame
 # from cvzone.HandTrackingModule import HandDetector
 from pygame import *
-import auxFuncs as myAux
+import myTools as myAux
 import game
 import sys
 import os
-import utility
+# import utility
 
 if(len(sys.argv) > 1):
     if (sys.argv[1] == '--cam' and sys.argv[2] == '1'):
@@ -41,7 +41,7 @@ state: 0
 # detector = HandDetector(detectionCon=0.8, maxHands=2)
 
 # Webcam inputs
-Winputs = utility.webcamInputs(src=camSrc,scale=0.7,windowRes=(game.Screen_Width,game.Screen_Height),detector='Menu')
+Winputs = myAux.webcamInputs(src=camSrc,scale=0.7,windowRes=(game.Screen_Width,game.Screen_Height),detector='Menu')
 subSampling = 3
 
 window = pygame.display.set_mode((game.Screen_Width, game.Screen_Height))
@@ -180,12 +180,14 @@ while start:
             # print("Exec Time (main): "+str(round((sum(ctime)/60)/(1000*1000)))+" (ms)")
             ctime.pop(0)
 
-        imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        imgRGB = np.rot90(imgRGB)
-        frame = pygame.surfarray.make_surface(imgRGB).convert()
-        frame = pygame.transform.flip(frame, True, False)
+        myAux.transform_cap(img, window)
 
-        window.blit(frame, (0, 0))
+        # imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        # imgRGB = np.rot90(imgRGB)
+        # frame = pygame.surfarray.make_surface(imgRGB).convert()
+        # frame = pygame.transform.flip(frame, True, False)
+        # window.blit(frame, (0, 0))
+
         window.blit(imgPlay, rectPlay)
         window.blit(imgLogo, rectLogo)
         window.blit(imgDeec, rectDeec)

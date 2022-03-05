@@ -1,13 +1,12 @@
 import cv2
 import pygame
 from pygame import *
-import mediapipe as mp
-import auxFuncs as myAux
+import myTools as myAux
 from google.protobuf.json_format import MessageToDict
 import pyautogui
 import sys
 
-import utility
+# import utility
 
 pygame.init()
 Screen_Width, Screen_Height = pyautogui.size()
@@ -125,7 +124,8 @@ def controller_filter(list,val):
     return sum(list)/len(list)
 
 
-def startgame(screen, Winputs, subSampling):
+def startgame(screen, vid_stream, subSampling, scale=0.7):
+
     state: 1
     pygame.time.delay(500)
 
@@ -134,24 +134,17 @@ def startgame(screen, Winputs, subSampling):
     #####################
 
 
-    img, hands, hscale = Winputs.get_inputs(subSampling)
+    # img, hands, hscale = Winputs.get_inputs(subSampling,menu=False)
     # (_, h_original,w_original,_,_) = myAux.getNewFrameOpenCV(camera, Screen_Width, Screen_Height)
     w_original,h_original = pygame.display.get_surface().get_size()
+    # print("W_ori",w_original,h_original)
 
     #############
     #   PYGAME  #
     #############
     clock = pygame.time.Clock()
-    #############
-    # MEDIAPIPE #
-    #############
-    mp_drawing = mp.solutions.drawing_utils
-    mp_drawing_styles = mp.solutions.drawing_styles
-    mp_hands = mp.solutions.hands
 
-    hands = mp_hands.Hands(model_complexity=0, min_detection_confidence=0.3, min_tracking_confidence=0.3)
-    doHandPose = True
-    drawHands = False
+    Winputs = myAux.webcamInputs(vid_stream=vid_stream,scale=scale,windowRes=(w_original,h_original),detector='GameHand')
 
     #############
     #   PONG    #
@@ -211,56 +204,8 @@ def startgame(screen, Winputs, subSampling):
         #   GET NEW FRAME   #
         #####################
         # (retval, frameHeight, frameWidth, frameChannels, frameCV) = myAux.getNewFrameOpenCV(camera, Screen_Width, Screen_Height)
-        frameCV, hands, hscale = Winputs.get_inputs(subSampling)
-        # if not retval:
-        #     break
-        frameCV_RGB = cv2.cvtColor(frameCV, cv2.COLOR_BGR2RGB)
-
-        #################
-        # GET HAND POSE #
-        #################
-        LEFT_INDEX_FINGER_TIP_X, LEFT_INDEX_FINGER_TIP_Y = -1, -1
-        RIGHT_INDEX_FINGER_TIP_X, RIGHT_INDEX_FINGER_TIP_Y = -1, -1
-        if doHandPose:
-            results = hands.process(frameCV_RGB) # convert from BGR to RGB
-            if results.multi_hand_landmarks is not None:
-                #############
-                # EACH HAND #
-                #############
-                for handLms, handedness in zip(results.multi_hand_landmarks, results.multi_handedness):
-                    #############
-                    # DRAW HAND #
-                    #############
-                    if drawHands:
-                        mp_drawing.draw_landmarks(
-                            frameCV,
-                            handLms,
-                            mp_hands.HAND_CONNECTIONS,
-                            mp_drawing_styles.get_default_hand_landmarks_style(),
-                            mp_drawing_styles.get_default_hand_connections_style())
-
-                    handedness_dict1 = MessageToDict(handedness)
-                    ###############
-                    # RIGHT HAND  #
-                    ###############
-                    if handedness_dict1['classification'][0]['label'] == 'Right':
-                        ###########################
-                        # EACH POINTS OF THE HAND #
-                        ###########################
-                        for id, lm in enumerate(handLms.landmark):
-                            if id == mp_hands.HandLandmark.INDEX_FINGER_TIP:
-                                RIGHT_INDEX_FINGER_TIP_X, RIGHT_INDEX_FINGER_TIP_Y = w_original-int(lm.x*w_original), int(lm.y*h_original)
-
-                    #############
-                    # LEFT HAND #
-                    #############
-                    if handedness_dict1['classification'][0]['label'] == 'Left':
-                        ###########################
-                        # EACH POINTS OF THE HAND #
-                        ###########################
-                        for id, lm in enumerate(handLms.landmark):
-                            if id == mp_hands.HandLandmark.INDEX_FINGER_TIP:
-                                LEFT_INDEX_FINGER_TIP_X, LEFT_INDEX_FINGER_TIP_Y = w_original-int(lm.x*w_original), int(lm.y*h_original)
+        frameCV, hands = Winputs.get_inputs(subSampling)
+        # frameCV_RGB = cv2.cvtColor(frameCV, cv2.COLOR_BGR2RGB)
 
 
         #########################
@@ -272,24 +217,24 @@ def startgame(screen, Winputs, subSampling):
         #################
         # PROCESS DATA  #
         #################
-        if LEFT_INDEX_FINGER_TIP_X != -1:
+        if hands[0][0] != -1:
             raio_bola_left = 15
-            left = pygame.draw.circle(screen, Player_color, (LEFT_INDEX_FINGER_TIP_X, LEFT_INDEX_FINGER_TIP_Y), raio_bola_left)
+            left = pygame.draw.circle(screen, Player_color, (hands[0][0], hands[0][1]), raio_bola_left)
 
-        if RIGHT_INDEX_FINGER_TIP_X != -1:
+        if hands[0][0] != -1:
             raio_bola_right = 15
-            right = pygame.draw.circle(screen, Opponent_color, (RIGHT_INDEX_FINGER_TIP_X, RIGHT_INDEX_FINGER_TIP_Y), raio_bola_right)
+            right = pygame.draw.circle(screen, Opponent_color, (hands[0][0], hands[0][1]), raio_bola_right)
 
         #########################
         #   PLAYER CONTROLLERS  #
         #########################
-        if LEFT_INDEX_FINGER_TIP_Y == -1:
+        if hands[0][1] == -1:
             if len(player_y_list) != 0:
                 player_y = player_y_list[len(player_y_list)-1]
             else:
                 player_y = 100
         else:
-            player_y = LEFT_INDEX_FINGER_TIP_Y
+            player_y = hands[0][1]
 
         error_player = controller_filter(player_y_list, player_y) - (player.y + playerLength/2)
         command_player = Controller_Kp*error_player
@@ -299,20 +244,20 @@ def startgame(screen, Winputs, subSampling):
         #   OPPONENT CONTROLLERS    #
         #############################
         if multiplayer:
-            if RIGHT_INDEX_FINGER_TIP_Y == -1:
+            if hands[0][1] == -1:
                 if len(opponent_y_list) != 0:
                     opponent_y = opponent_y_list[len(opponent_y_list)-1]
                 else:
                     opponent_y = 100
             else:
-                opponent_y = RIGHT_INDEX_FINGER_TIP_Y
+                opponent_y = hands[0][1]
 
         error_opponent = controller_filter(opponent_y_list, opponent_y) - (opponent.y + playerLength/2)
         command_opponent = Controller_Kp*error_opponent
         opponent.y = controller_lim(opponent.y + command_opponent, controller_min,controller_max)
 
         # tip to menu
-        if rectmenu.collidepoint(RIGHT_INDEX_FINGER_TIP_X, RIGHT_INDEX_FINGER_TIP_Y) or rectmenu.collidepoint(LEFT_INDEX_FINGER_TIP_X, LEFT_INDEX_FINGER_TIP_Y):
+        if rectmenu.collidepoint(hands[0][0], hands[0][1]) or rectmenu.collidepoint(hands[0][0], hands[0][1]):
             return
 
         #####################
@@ -357,15 +302,15 @@ def startgame(screen, Winputs, subSampling):
             ball.y = h_original/2
             pygame.mixer.Sound.play(Score)
 
-        if  opponentScore >= 3:
-            myAux.winner_screen(camera, window, 1)
+        if  opponentScore >= 1:
+            myAux.winner_screen(vid_stream, window, 1,subSampling=subSampling)
             pygame.display.update()
             pygame.event.pump()
             pygame.time.delay(1500)
             return
 
-        if  playerScore >= 3:
-            myAux.winner_screen(camera, window, 2)
+        if  playerScore >= 1:
+            myAux.winner_screen(vid_stream, window, 2,subSampling=subSampling)
             pygame.display.update()
             pygame.event.pump()
             pygame.time.delay(1500)

@@ -5,7 +5,6 @@ import cv2
 #Hand Detector
 from cvzone.HandTrackingModule import HandDetector
 import mediapipe as mp
-
 from google.protobuf.json_format import MessageToDict
 
 class webcamInputs:
@@ -37,8 +36,6 @@ class webcamInputs:
                 mp_drawing_styles = mp.solutions.drawing_styles
                 self.mp_hands = mp.solutions.hands
                 self.detector = self.mp_hands.Hands(model_complexity=0, min_detection_confidence=0.3, min_tracking_confidence=0.3)
-                # self.LEFT_INDEX_FINGER_TIP_X, self.LEFT_INDEX_FINGER_TIP_Y = -1, -1
-                # self.RIGHT_INDEX_FINGER_TIP_X, self.RIGHT_INDEX_FINGER_TIP_Y = -1, -1
 
         self.subSampCounter = 0
 
@@ -74,33 +71,24 @@ class webcamInputs:
 
                     results = self.detector.process(frameCV_RGB) # convert from BGR to RGB
                     if results.multi_hand_landmarks is not None:
-                        #############
                         # EACH HAND #
-                        #############
                         for handLms, handedness in zip(results.multi_hand_landmarks, results.multi_handedness):
-
                             handedness_dict1 = MessageToDict(handedness)
-                            ###############
                             # RIGHT HAND  #
-                            ###############
                             if handedness_dict1['classification'][0]['label'] == 'Right':
-                                ###########################
                                 # EACH POINTS OF THE HAND #
-                                ###########################
                                 for id, lm in enumerate(handLms.landmark):
                                     if id == self.mp_hands.HandLandmark.INDEX_FINGER_TIP:
-                                        self.RIGHT_INDEX_FINGER_TIP_X, self.RIGHT_INDEX_FINGER_TIP_Y = self.windowRes[0]-int(lm.x*self.windowRes[0]), int(lm.y*self.windowRes[1])
-
-                            #############
+                                        x, y = self.windowRes[0]-int(lm.x*self.windowRes[0]), int(lm.y*self.windowRes[1])
+                                        self.l_hands[1] = (x*self.hscale[0],y*self.hscale[1])
                             # LEFT HAND #
-                            #############
                             if handedness_dict1['classification'][0]['label'] == 'Left':
-                                ###########################
                                 # EACH POINTS OF THE HAND #
-                                ###########################
                                 for id, lm in enumerate(handLms.landmark):
                                     if id == self.mp_hands.HandLandmark.INDEX_FINGER_TIP:
-                                        self.LEFT_INDEX_FINGER_TIP_X, self.LEFT_INDEX_FINGER_TIP_Y = self.windowRes[0]-int(lm.x*self.windowRes[0]), int(lm.y*self.windowRes[1])
+                                        x, y = self.windowRes[0]-int(lm.x*self.windowRes[0]), int(lm.y*self.windowRes[1])
+                                        self.l_hands[0] = (x*self.hscale[0],y*self.hscale[1])
+
             frame = cv2.resize(frame, (self.outRes[0], self.outRes[1]), interpolation=cv2.INTER_AREA)
             self.l_frame = frame
             self.subSampCounter = 0
@@ -111,4 +99,4 @@ class webcamInputs:
             return self.l_frame, self.l_hands
         else:
             if self.detectorType == 'GameHand':
-                return self.l_frame, self.LEFT_INDEX_FINGER_TIP_X, self.LEFT_INDEX_FINGER_TIP_Y, self.RIGHT_INDEX_FINGER_TIP_X, self.RIGHT_INDEX_FINGER_TIP_Y
+                return self.l_frame, self.l_hands

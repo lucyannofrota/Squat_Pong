@@ -1,11 +1,13 @@
+from turtle import Screen, screensize
 import cv2
+from pyparsing import White
 import pygame
 from pygame import *
 import myTools as myAux
 from google.protobuf.json_format import MessageToDict
 import pyautogui
 import sys
-
+import images
 # import utility
 
 pygame.init()
@@ -17,67 +19,69 @@ mixer.init()
 Paddle = mixer.Sound("Sounds/Paddle.wav")
 Wall = mixer.Sound("Sounds/Wall.wav")
 Score = mixer.Sound("Sounds/Score.wav")
+scale = 0.7
+score_size = [scale*250, scale*100]
 
-score_0_size = [250, 100]
-score_0_0_size = [250, 100]
-score_1_size = [250, 100]
-score_1_1_size = [250, 100]
-score_2_size = [250, 100]
-score_2_2_size = [250, 100]
-score_3_size = [250, 100]
-score_3_3_size = [250, 100]
-
-menu_size = [250, 100]
-sep_size = [2100, 50]
+menu_size = [scale*250, scale*100]
+sep_size = [scale*1920, scale*50]
 
 # imagens
 # score_0
-imgscore_0 = pygame.image.load('Images/score_0.png').convert_alpha()
-rectscore_0 = imgscore_0.get_rect()
-rectscore_0.x, rectscore_0.y = Screen_Width/2 + 4*score_0_size[0]/2, Screen_Height/2 - 10*score_0_size[1]/2
+imgscore_0, rectscore_0 = images.load_image(file_name='Images/score_0.png',
+                                            img_size=score_size,
+                                            translation=(-4, 10))
 
-imgscore_0_0 = pygame.image.load('Images/score_0_0.png').convert_alpha()
-rectscore_0_0 = imgscore_0_0.get_rect()
-rectscore_0_0.x, rectscore_0_0.y = Screen_Width/2 - 6*score_0_0_size[0]/2, Screen_Height/2 - 10*score_0_0_size[1]/2
-
+imgscore_0_0, rectscore_0_0 = images.load_image(file_name='Images/score_0_0.png',
+                                                img_size=score_size,
+                                                translation=(6, 10))
 # score_1
-imgscore_1 = pygame.image.load('Images/score_1.png').convert_alpha()
-rectscore_1 = imgscore_1.get_rect()
-rectscore_1.x, rectscore_1.y = Screen_Width/2 + 4*score_1_size[0]/2, Screen_Height/2 - 10*score_1_size[1]/2
+imgscore_1, rectscore_1 = images.load_image(file_name='Images/score_1.png',
+                                            img_size=score_size,
+                                            translation=(-4, 10))
 
-imgscore_1_1 = pygame.image.load('Images/score_1_1.png').convert_alpha()
-rectscore_1_1 = imgscore_1_1.get_rect()
-rectscore_1_1.x, rectscore_1_1.y = Screen_Width/2 - 6*score_1_1_size[0]/2, Screen_Height/2 - 10*score_1_1_size[1]/2
+imgscore_1_1, rectscore_1_1 = images.load_image(file_name='Images/score_1_1.png',
+                                                img_size=score_size,
+                                                translation=(6, 10))
 
 # score_2
-imgscore_2 = pygame.image.load('Images/score_2.png').convert_alpha()
-rectscore_2 = imgscore_2.get_rect()
-rectscore_2.x, rectscore_2.y = Screen_Width/2 + 4*score_2_size[0]/2, Screen_Height/2 - 10*score_2_size[1]/2
+imgscore_2, rectscore_2 = images.load_image(file_name='Images/score_2.png',
+                                            img_size=score_size,
+                                            translation=(-4, 10))
 
-imgscore_2_2 = pygame.image.load('Images/score_2_2.png').convert_alpha()
-rectscore_2_2 = imgscore_2_2.get_rect()
-rectscore_2_2.x, rectscore_2_2.y = Screen_Width/2 - 6*score_2_2_size[0]/2, Screen_Height/2 - 10*score_2_2_size[1]/2
+imgscore_2_2, rectscore_2_2 = images.load_image(file_name='Images/score_2_2.png',
+                                            img_size=score_size,
+                                            translation=(6, 10))
 
 # score_3
-imgscore_3 = pygame.image.load('Images/score_3.png').convert_alpha()
-rectscore_3 = imgscore_3.get_rect()
-rectscore_3.x, rectscore_3.y = Screen_Width/2 + 4*score_3_size[0]/2, Screen_Height/2 - 10*score_3_size[1]/2
+imgscore_3, rectscore_3 = images.load_image(file_name='Images/score_3.png',
+                                            img_size=score_size,
+                                            translation=(-4, 10))
 
-imgscore_3_3 = pygame.image.load('Images/score_3_3.png').convert_alpha()
-rectscore_3_3 = imgscore_3_3.get_rect()
-rectscore_3_3.x, rectscore_3_3.y = Screen_Width/2 - 6*score_3_3_size[0]/2, Screen_Height/2 - 10*score_3_3_size[1]/2
-
+imgscore_3_3, rectscore_3_3 = images.load_image(file_name='Images/score_3_3.png',
+                                            img_size=score_size,
+                                            translation=(6, 10))
 # Menu
-imgmenu = pygame.image.load('Images/menu.png').convert_alpha()
-rectmenu = imgmenu.get_rect()
-rectmenu.x, rectmenu.y = Screen_Width/2 - menu_size[0]/2, Screen_Height/2 - 10*menu_size[1]/2
+imgmenu, rectmenu = images.load_image(file_name='Images/menu.png',
+                                      img_size=menu_size,
+                                      translation=(1,10))
 
+# background
+imgBg, rectBg = images.load_image(file_name='Images/arcade.jpg',
+                                  img_size=(1920, 1080),
+                                  translation=(1,1))
 
 # separação
-imgsep = pygame.image.load('Images/sep_op1.png').convert_alpha()
-rectsep = imgsep.get_rect()
-rectsep.x, rectsep.y = Screen_Width/2 - sep_size[0]/2, 3*sep_size[1]
-topBar = (3+1)*sep_size[1]
+imgsep, rectsep = images.load_image(file_name='Images/sep_op1.png',
+                                    img_size=sep_size,
+                                    translation=(1, 16))
+
+# retangulo semi transparente
+menuBg = pygame.Surface((0.7*Screen_Width, 120))
+menuBg.fill((255,255,255))
+menuBg.set_alpha(100)
+menuBgPos = [(Screen_Width - scale*Screen_Width)/2, (Screen_Height - scale*Screen_Height)/2]
+
+topBar = 0 #Screen_Height / 2 - 16 * sep_size[1] / 2
 
 
 #Player color
@@ -125,7 +129,6 @@ def controller_filter(list,val):
 
 
 def startgame(screen, in_Winputs):
-
     state: 1
     pygame.time.delay(500)
 
@@ -215,6 +218,7 @@ def startgame(screen, in_Winputs):
         #########################
         # framePy = myAux.frameCV2Py(frameCV)
         # print(Winputs.offset)
+        window.blit(imgBg, rectBg)
         screen.blit(frameCV, Winputs.offset)
 
         #################
@@ -323,6 +327,7 @@ def startgame(screen, in_Winputs):
         #   DRAW GAME   #
         #################
         # to show scores
+        window.blit(menuBg, menuBgPos) # draw menu background
         if opponentScore == 0:
             window.blit(imgscore_0_0, rectscore_0_0)
         if playerScore == 0:
@@ -339,12 +344,13 @@ def startgame(screen, in_Winputs):
             window.blit(imgscore_3, rectscore_3)
         if opponentScore == 3:
             window.blit(imgscore_3_3, rectscore_3_3)
+
+        
         window.blit(imgmenu, rectmenu)
         window.blit(imgsep, rectsep)
         pygame.draw.ellipse(screen, (3, 173, 254), ball)
         pygame.draw.rect(screen, Player_color, player)
         pygame.draw.rect(screen, Opponent_color, opponent)
-
         # Flip the display
         pygame.display.flip()
 

@@ -5,7 +5,7 @@ import game
 
 def load_image(file_name, img_size, translation, resize=1):
     image = pygame.image.load(file_name).convert_alpha()
-    if resize: 
+    if resize:
         image = pygame.transform.scale(image, (img_size[0], img_size[1]))
     image_pos = image.get_rect()
     image_pos.x = game.Screen_Width / 2 - translation[0] * img_size[0] / 2

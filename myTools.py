@@ -1,13 +1,15 @@
 import cv2
 import time as t
+from cv2 import resize
+from isort import file
 import numpy as np
+
 import pygame
 from pygame import *
 import pyautogui
 import game
 from tkinter.filedialog import *
 import os
-
 
 import imutils
 from imutils.video import VideoStream
@@ -16,6 +18,8 @@ from imutils.video import VideoStream
 from cvzone.HandTrackingModule import HandDetector
 import mediapipe as mp
 from google.protobuf.json_format import MessageToDict
+
+from images import load_image
 
 # Detector
 detector = HandDetector(detectionCon=0.8, maxHands=2)
@@ -42,55 +46,55 @@ def pic_screen(in_Winputs, window):
 
     index = 0
     running = True
-    count = 0
+    Arrow_Left, Arrow_Left_coord = load_image(file_name='Images/Arrow_Left.png',
+                                                  img_size = (150, 150),
+                                                  translation=(9,1))
+        
+    Arrow_Right, Arrow_Right_coord = load_image(file_name='Images/Arrow_Right.png',
+                                                  img_size = (150, 150),
+                                                  translation=(-6.8, 1))
+    imgBg, rectBg = load_image(file_name='Images/arcade.jpg',
+                                img_size=(1920, 1080),
+                                translation=(1,1))
+    # retangulo semi transparente
+    menuBg = pygame.Surface((0.7*game.Screen_Width, 0.7*game.Screen_Height))
+    menuBg.fill((255,255,255))
+    menuBg.set_alpha(100)
+    menuBgPos = [(game.Screen_Width - 0.7*game.Screen_Width)/2, 
+                 (game.Screen_Height - 0.7*game.Screen_Height)/2]
 
     while running:
         game.event()
+        window.blit(imgBg, rectBg)
 
         img, hands = Winputs.get_inputs()
         transform_cap(img, window, Winputs.offset)
-        # img = cv2.resize(img, (game.Screen_Width, game.Screen_Height))
-        # img = cv2.flip(img, 1)
 
-        # transform_cap(img, window)
-
-        # Load Imagem
-        Imagem = pygame.image.load("Pictures/screenshot_" + str(index) + ".png").convert_alpha()
-        Imagem = pygame.transform.scale(Imagem, (int(game.Screen_Width / 1.3), int(game.Screen_Height / 1.35)))
-        Imagem_coord = Imagem.get_rect()
-        Imagem_coord.x, Imagem_coord.y = int(game.Screen_Width / 8), int(game.Screen_Height / 7.4)
+        Imagem, Imagem_coord = load_image(file_name="Pictures/screenshot_" + str(index) + ".png",
+                                          img_size=(game.Screen_Width*0.5, game.Screen_Height*0.5),
+                                          translation=(1,1))
+        window.blit(menuBg, menuBgPos)
         window.blit(Imagem, Imagem_coord)
-        # Arrows
-        Arrow_Left = pygame.image.load('Images/Arrow_Left.png').convert_alpha()
-        Arrow_Left = pygame.transform.scale(Arrow_Left, (150, 150))
-        Arrow_Left_coord = Arrow_Left.get_rect()
-        Arrow_Left_coord.x, Arrow_Left_coord.y = int(game.Screen_Width / 52), int(game.Screen_Height / 2)
         window.blit(Arrow_Left, Arrow_Left_coord)
-
-        Arrow_Right = pygame.image.load('Images/Arrow_Right.png').convert_alpha()
-        Arrow_Right = pygame.transform.scale(Arrow_Right, (150, 150))
-        Arrow_Right_coord = Arrow_Right.get_rect()
-        Arrow_Right_coord.x, Arrow_Right_coord.y = int(game.Screen_Width / 1.1), int(game.Screen_Height / 2)
         window.blit(Arrow_Right, Arrow_Right_coord)
 
         #Background
-        BackGround = pygame.image.load('Images/BackGround.png').convert_alpha()
-        BackGround = pygame.transform.scale(BackGround, (game.Screen_Width / 1.2, game.Screen_Height))
-        BackGround_coord = BackGround.get_rect()
-        BackGround_coord.x, BackGround_coord.y = game.Screen_Width / 11, 0
+        BackGround, BackGround_coord = load_image(file_name='Images/BackGround.png',
+                                                  img_size= (0.55*game.Screen_Width, 0.7*game.Screen_Height),
+                                                  translation=(1,1))
         window.blit(BackGround, BackGround_coord)
 
         # Menu
         menu_size = [250, 100]
-        menu = pygame.image.load('Images/menu.png').convert_alpha()
-        menu_coord = menu.get_rect()
-        menu_coord.x, menu_coord.y = game.Screen_Width / 2 - menu_size[0] / 2, game.Screen_Height / 2 - 10.5 * menu_size[1] / 2
+        menu, menu_coord = load_image(file_name='Images/menu.png',
+                                      img_size = menu_size,
+                                      translation=(1, 7.5))
         window.blit(menu, menu_coord)
 
         # Contador da imagem a mostrar
         page = font.render(str(index + 1) + "/" + str(total_files), True, (0, 0, 0))
 
-        window.blit(page, (text_x, text_y))
+        window.blit(page, (text_x+50, text_y-125))
 
         # if count % 4 == 0:
         #     hands, img = detector.findHands(img, flipType=False)
@@ -123,12 +127,12 @@ def pic_screen(in_Winputs, window):
                     index += 1
                     if index >= total_files:
                         index = 0
-                    time.delay(500)
+                    pygame.time.delay(500)
                 if Arrow_Left_coord.collidepoint(hand[0], hand[1]):
                     index -= 1
                     if index < 0:
                         index = total_files - 1
-                    time.delay(500)
+                    pygame.time.delay(500)
                 if menu_coord.collidepoint(hand[0], hand[1]):
                     running = False
 
@@ -138,10 +142,10 @@ def pic_screen(in_Winputs, window):
 def Text(screen, winner_x, winner_y, loser_x, loser_y):
 
     Winner = pygame.image.load('Images/winner.png').convert_alpha()
-    Winner = pygame.transform.scale(Winner, (int(game.Screen_Width / 3), int(game.Screen_Height / 6.1)))
+    Winner = pygame.transform.scale(Winner, (int(game.Screen_Width / 5), int(game.Screen_Height / 10)))
 
     Loser = pygame.image.load('Images/loser.png').convert_alpha()
-    Loser = pygame.transform.scale(Loser, (int(game.Screen_Width / 3.7), int(game.Screen_Height / 5.7)))
+    Loser = pygame.transform.scale(Loser, (int(game.Screen_Width / 6), int(game.Screen_Height / 10)))
 
     screen.blit(Winner, (winner_x - game.Screen_Width / 20, winner_y))
     screen.blit(Loser, (loser_x, loser_y))
@@ -159,7 +163,7 @@ def transform_cap(img, screen, offset=(0,0)):
     screen.blit(frame, offset)
 
 
-def define_winner(in_Winputs, screen, coord_x_crown, coord_y_crown, coord_x_rect, coord_y_rect, result):
+def define_winner(in_Winputs, screen, coord_x_crown, coord_y_crown, result):
     Winputs = webcamInputs(webcamInputs=in_Winputs,vid_stream=in_Winputs.vid_stream,offset=in_Winputs.offset,subSampling=in_Winputs.subSampling,detector='Menu')
     # Winputs = webcamInputs(webcamInputs=in_Winputs,detector='Menu')
     running = True
@@ -167,21 +171,27 @@ def define_winner(in_Winputs, screen, coord_x_crown, coord_y_crown, coord_x_rect
     start_time = t.time()
     while running:
         game.event()
-        # success, img = cap.read()
-        # img = cv2.resize(img, (game.Screen_Width, game.Screen_Height))
-        # img = cv2.flip(img, 1)
         img, hands = Winputs.get_inputs()
         transform_cap(img, screen, Winputs.offset)
 
         # Crown e Joker
-        Crown = pygame.image.load('Images/Crown.png').convert_alpha()
-        Crown_coord = Crown.get_rect()
+        Crown, Crown_coord = load_image(file_name='Images/Crown.png',
+                                        img_size=(400,400),
+                                        translation=(0,0),
+                                        resize=1)
 
-        Joker = pygame.image.load('Images/joker.png').convert_alpha()
-        Joker_coord = Joker.get_rect()
+        # Joker = pygame.image.load('Images/joker.png').convert_alpha()
+        # Joker_coord = Joker.get_rect()
 
-        Tears = pygame.image.load('Images/tears.png').convert_alpha()
-        Tears_coord = Tears.get_rect()
+        Joker, Joker_coord = load_image(file_name='Images/joker.png',
+                                        img_size=(450,400),
+                                        translation=(0,0),
+                                        resize=1)
+
+        Tears, Tears_coord = load_image(file_name='Images/tears.png',
+                                        img_size=(450,400),
+                                        translation=(0,0),
+                                        resize=1)
 
         Pic = pygame.image.load('Images/picture.png').convert_alpha()
         Pic_coord = Pic.get_rect()
@@ -191,17 +201,17 @@ def define_winner(in_Winputs, screen, coord_x_crown, coord_y_crown, coord_x_rect
         screen.blit(Crown, Crown_coord)
 
         if result == 1:
-            Joker_coord.x, Joker_coord.y = int(coord_x_crown + game.Screen_Width / 2.1), int(coord_y_crown)
-            Tears_coord.x, Tears_coord.y = int(coord_x_crown + game.Screen_Width / 2.1), int(coord_y_crown + game.Screen_Height / 2.2)
+            Joker_coord.x, Joker_coord.y = int(coord_x_crown + 0.7*game.Screen_Width / 2.1), int(coord_y_crown)
+            Tears_coord.x, Tears_coord.y = int(coord_x_crown + 0.7*game.Screen_Width / 2.1), int(coord_y_crown + 0.8*game.Screen_Height / 2.2)
 
             #Texto Winner/Loser
-            Text(screen, coord_x_crown, coord_y_crown + game.Screen_Height / 1.2, coord_x_crown + game.Screen_Width / 1.95, coord_y_crown + game.Screen_Height / 1.2)
+            Text(screen, coord_x_crown, coord_y_crown + game.Screen_Height / 3, coord_x_crown + game.Screen_Width / 3.2, coord_y_crown + game.Screen_Height / 2)
         else:
-            Joker_coord.x, Joker_coord.y = int(coord_x_crown - game.Screen_Width / 1.9), int(coord_y_crown)
-            Tears_coord.x, Tears_coord.y = int(coord_x_crown - game.Screen_Width / 1.9), int(coord_y_crown + game.Screen_Height / 2.2)
+            Joker_coord.x, Joker_coord.y = int(coord_x_crown - 0.7*game.Screen_Width / 1.9), int(coord_y_crown)
+            Tears_coord.x, Tears_coord.y = int(coord_x_crown - 0.7*game.Screen_Width / 1.9), int(coord_y_crown + 0.8*game.Screen_Height / 2.2)
 
             # Texto Winner/Loser
-            Text(screen, coord_x_crown, coord_y_crown + game.Screen_Height / 1.2, coord_x_crown - game.Screen_Width / 1.95, coord_y_crown + game.Screen_Height / 1.2)
+            Text(screen, coord_x_crown, coord_y_crown + game.Screen_Height / 3, coord_x_crown - game.Screen_Width / 3.2, coord_y_crown + game.Screen_Height / 2)
 
         screen.blit(Joker, Joker_coord)
         screen.blit(Tears, Tears_coord)
@@ -229,14 +239,14 @@ def define_winner(in_Winputs, screen, coord_x_crown, coord_y_crown, coord_x_rect
 def winner_screen(screen, in_Winputs, result):
     # Player A Ganha
     if result == 1:
-        define_winner(in_Winputs, screen, game.Screen_Width / 8, 0, game.Screen_Width / 2.3, game.Screen_Height / 1.5, result)
+        define_winner(in_Winputs, screen, game.Screen_Width / 5, game.Screen_Height/10, result)
     # Player B Ganha
     else:
-        define_winner(in_Winputs, screen, game.Screen_Width / 1.6, 0, game.Screen_Width / 2.3, game.Screen_Height / 1.5, result)
+        define_winner(in_Winputs, screen, game.Screen_Width/1.8,  game.Screen_Height/10, result)
 
 
 def showFPS(prev_frame_time, new_frame_time):
-    new_frame_time = time.time()
+    new_frame_time = t.time()
     fps = str(int(1/(new_frame_time-prev_frame_time)))
     prev_frame_time = new_frame_time
     return prev_frame_time, new_frame_time, fps

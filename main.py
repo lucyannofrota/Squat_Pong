@@ -1,4 +1,5 @@
 from distutils.log import error
+from fileinput import filename
 from msilib.schema import Class
 import time as t
 from turtle import left, right, screensize
@@ -17,7 +18,7 @@ import images
 
 if(len(sys.argv) > 1):
     if (sys.argv[1] == '--cam' and sys.argv[2] == '1'):
-        camSrc = 'https://192.168.1.118:8080/video'
+        camSrc = 'https://192.168.1.169:8080/video'
 else:
     camSrc = 0
 
@@ -92,11 +93,16 @@ imgRight, rectRight = images.load_image(file_name='Images/red.png',
 imgCam, rectCam = images.load_image(file_name='Images/cam.png',
                                       img_size=cam_size,
                                       translation = (-7.5, 6.5))
+# right side squat gif
 gifSquat_Right = images.load_gif("Image_right", "right", gif_size, (-1.2, 0.4))
 
 #left side squat gif
 gifSquat_Left = images.load_gif("Image_left","left", gif_size, (2.8, 0.4))
 
+# background
+imgBg, rectBg = images.load_image(file_name='Images/arcade.jpg',
+                                  img_size=(1920, 1080),
+                                  translation=(1,1))
 # Variables
 speed = 10
 startTime = t.time()
@@ -123,14 +129,14 @@ while start:
                 pygame.quit()
                 sys.exit()
 
-    window.fill((0, 0, 0))
+    # window.fill((0, 0, 0))
     index = sum([len(files) for r, d, files in os.walk("Pictures")])
     # OpenCV
     img, hands = Winputs.get_inputs()
     if(tcount >= 60):
         # print("Exec Time (main): "+str(round((sum(ctime)/60)/(1000*1000)))+" (ms)")
         ctime.pop(0)
-
+    window.blit(imgBg, rectBg)
     myAux.transform_cap(img, window, (screen_size[0],screen_size[1]))
 
     # imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -138,7 +144,7 @@ while start:
     # frame = pygame.surfarray.make_surface(imgRGB).convert()
     # frame = pygame.transform.flip(frame, True, False)
     # window.blit(frame, (0, 0))
-
+    
     window.blit(imgPlay, rectPlay)
     window.blit(imgLogo, rectLogo)
     window.blit(imgDeec, rectDeec)

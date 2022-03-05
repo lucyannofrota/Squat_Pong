@@ -30,7 +30,7 @@ def TakePic():
     screen_shot.save(save_path + "/screenshot_" + str(index) +".png")
 
 
-def pic_screen(cap, window):
+def pic_screen(in_Winputs, window):
     # Conta Número de Ficheiros Em Pictures
     total_files = sum([len(files) for r, d, files in os.walk("Pictures")])
 
@@ -38,17 +38,21 @@ def pic_screen(cap, window):
     text_x = game.Screen_Width / 2.3
     text_y = game.Screen_Height / 1.1
 
+    Winputs = webcamInputs(webcamInputs=in_Winputs,vid_stream=in_Winputs.vid_stream,offset=in_Winputs.offset,subSampling=in_Winputs.subSampling,detector='Menu')
+
     index = 0
     running = True
     count = 0
+
     while running:
         game.event()
 
-        success, img = cap.read()
-        img = cv2.resize(img, (game.Screen_Width, game.Screen_Height))
-        img = cv2.flip(img, 1)
+        img, hands = Winputs.get_inputs()
+        transform_cap(img, window, Winputs.offset)
+        # img = cv2.resize(img, (game.Screen_Width, game.Screen_Height))
+        # img = cv2.flip(img, 1)
 
-        transform_cap(img, window)
+        # transform_cap(img, window)
 
         # Load Imagem
         Imagem = pygame.image.load("Pictures/screenshot_" + str(index) + ".png").convert_alpha()
@@ -88,24 +92,45 @@ def pic_screen(cap, window):
 
         window.blit(page, (text_x, text_y))
 
-        if count % 4 == 0:
-            hands, img = detector.findHands(img, flipType=False)
-            if hands:
-                for hand in hands:
-                    x, y, c = hand['lmList'][8]
-                    pygame.draw.circle(window, (255, 0, 0), (x, y), 15)
-                    if Arrow_Right_coord.collidepoint(x, y):
-                        index += 1
-                        if index >= total_files:
-                            index = 0
-                        time.delay(500)
-                    if Arrow_Left_coord.collidepoint(x, y):
-                        index -= 1
-                        if index < 0:
-                            index = total_files - 1
-                        time.delay(500)
-                    if menu_coord.collidepoint(x, y):
-                        running = False
+        # if count % 4 == 0:
+        #     hands, img = detector.findHands(img, flipType=False)
+        #     if hands:
+        #         for hand in hands:
+        #             x, y, c = hand['lmList'][8]
+        #             pygame.draw.circle(window, (255, 0, 0), (x, y), 15)
+        #             if Arrow_Right_coord.collidepoint(x, y):
+        #                 index += 1
+        #                 if index >= total_files:
+        #                     index = 0
+        #                 time.delay(500)
+        #             if Arrow_Left_coord.collidepoint(x, y):
+        #                 index -= 1
+        #                 if index < 0:
+        #                     index = total_files - 1
+        #                 time.delay(500)
+        #             if menu_coord.collidepoint(x, y):
+        #                 running = False
+
+        if hands:
+            for hand in hands:
+                if hand != (-1,-1):
+                        pygame.draw.circle(window, (191, 39, 28), hand, 15)
+                else:
+                    if hand != (-1,-1):
+                        pygame.draw.circle(window, (148, 25, 134), hand, 15)
+                        
+                if Arrow_Right_coord.collidepoint(hand[0], hand[1]):
+                    index += 1
+                    if index >= total_files:
+                        index = 0
+                    time.delay(500)
+                if Arrow_Left_coord.collidepoint(hand[0], hand[1]):
+                    index -= 1
+                    if index < 0:
+                        index = total_files - 1
+                    time.delay(500)
+                if menu_coord.collidepoint(hand[0], hand[1]):
+                    running = False
 
         pygame.display.update()
 
@@ -135,7 +160,7 @@ def transform_cap(img, screen, offset=(0,0)):
 
 
 def define_winner(in_Winputs, screen, coord_x_crown, coord_y_crown, coord_x_rect, coord_y_rect, result):
-    Winputs = webcamInputs(webcamInputs=in_Winputs,vid_stream=in_Winputs.vid_stream,offset=in_Winputs.offset,subSampling=0,detector='Menu')
+    Winputs = webcamInputs(webcamInputs=in_Winputs,vid_stream=in_Winputs.vid_stream,offset=in_Winputs.offset,subSampling=in_Winputs.subSampling,detector='Menu')
     # Winputs = webcamInputs(webcamInputs=in_Winputs,detector='Menu')
     running = True
     count = 0
@@ -146,7 +171,6 @@ def define_winner(in_Winputs, screen, coord_x_crown, coord_y_crown, coord_x_rect
         # img = cv2.resize(img, (game.Screen_Width, game.Screen_Height))
         # img = cv2.flip(img, 1)
         img, hands = Winputs.get_inputs()
-
         transform_cap(img, screen, Winputs.offset)
 
         # Crown e Joker
@@ -190,9 +214,9 @@ def define_winner(in_Winputs, screen, coord_x_crown, coord_y_crown, coord_x_rect
                     if hand != (-1,-1):
                         pygame.draw.circle(screen, (148, 25, 134), hand, 15)
                         
-                    if Pic_coord.collidepoint(hand[0], hand[1]):
-                            TakePic()
-                            running = False
+                if Pic_coord.collidepoint(hand[0], hand[1]):
+                        TakePic()
+                        running = False
         # print("Tick")
         screen.blit(Pic, Pic_coord)
         pygame.display.update()

@@ -143,7 +143,7 @@ def startgame(screen, in_Winputs):
 
     
     # Winputs = myAux.webcamInputs(vid_stream=in_Winputs.vid_stream,subSampling=0,src=0,scale=0.7,windowRes=(1920,1080),detector='GameHand')
-    Winputs = myAux.webcamInputs(webcamInputs=in_Winputs,vid_stream=in_Winputs.vid_stream,offset=in_Winputs.offset,subSampling=0,detector='GameHand')
+    Winputs = myAux.webcamInputs(webcamInputs=in_Winputs,vid_stream=in_Winputs.vid_stream,offset=in_Winputs.offset,detector='GameHand')
     # Winputs = myAux.webcamInputs(vid_stream=in_Winputs.vid_stream,subSampling=0,scale=in_Winputs.scale,windowRes=in_Winputs.windowRes,offset=in_Winputs.offset,detector='GameHand')
     # Winputs = myAux.webcamInputs(vid_stream=in_Winputs.vid_stream,subSampling=0,src=0,scale=0.7,windowRes=(1920,1080),offset=in_Winputs.offset,detector='GameHand')
 

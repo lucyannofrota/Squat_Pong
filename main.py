@@ -168,9 +168,9 @@ while start:
                 
             if rectPlay.collidepoint(hand[0], hand[1]):
                 game.startgame(window, Winputs)
-            # if rectCam.collidepoint(hand[0], hand[1]):
-            #     if index != 0:
-            #         myAux.pic_screen(Winputs.vid_stream, window, 0)
+            if rectCam.collidepoint(hand[0], hand[1]):
+                if index != 0:
+                    myAux.pic_screen(Winputs, window)
 
     # Update Display
     pygame.display.update()

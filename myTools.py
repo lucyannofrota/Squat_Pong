@@ -175,9 +175,12 @@ def define_winner(in_Winputs, screen, coord_x_crown, coord_y_crown, result):
     running = True
     count = 0
     start_time = t.time()
+    Winputs_Face = webcamInputs(webcamInputs=in_Winputs, vid_stream=in_Winputs.vid_stream, offset=in_Winputs.offset,
+                                 detector='FaceDetection', subSampling=0)
     while running:
         game.event()
         img, hands = Winputs.get_inputs()
+        _, face = Winputs_Face.get_inputs()
         transform_cap(img, screen, Winputs.offset)
 
         # Crown e Joker
@@ -200,23 +203,26 @@ def define_winner(in_Winputs, screen, coord_x_crown, coord_y_crown, result):
         Pic_coord = Pic.get_rect()
         Pic_coord.x, Pic_coord.y = game.Screen_Width / 2.2, game.Screen_Height / 1.6
 
-        Crown_coord.x, Crown_coord.y = int(coord_x_crown), int(coord_y_crown)
-        screen.blit(Crown, Crown_coord)
-
         if result == 1:
+            Crown_coord.x, Crown_coord.y = int(coord_x_crown), int(coord_y_crown)
             Clown_coord.x, Clown_coord.y = int(coord_x_crown + game.Screen_Width / 20), int(coord_y_crown)
             Tears_coord.x, Tears_coord.y = int(coord_x_crown + 0.7*game.Screen_Width / 2.1), int(coord_y_crown + 0.8* game.Screen_Height / 2.2)
+            if (face[0][0] != 0) or (face[0][1] != 0):
+                pygame.draw.circle(screen, (255, 0, 0), (face[0][0], face[0][1]), 60)
 
             #Texto Winner/Loser
             Text(screen, coord_x_crown, coord_y_crown + game.Screen_Height / 3, coord_x_crown + game.Screen_Width / 3.2, coord_y_crown + game.Screen_Height / 2, result)
-        else:
-
-            Clown_coord.x, Clown_coord.y = int(coord_x_crown + game.Screen_Width / 20), int(coord_y_crown)
-            Tears_coord.x, Tears_coord.y = int(coord_x_crown - 0.7*game.Screen_Width / 1.9), int(coord_y_crown + 0.8*game.Screen_Height / 2.2)
+        elif result == 0:
+            Crown_coord.x, Crown_coord.y = int(coord_x_crown + 0.7*game.Screen_Width / 1.9), int(coord_y_crown)
+            Tears_coord.x, Tears_coord.y = int(coord_x_crown + game.Screen_Width / 40), int(coord_y_crown + Screen_Height / 3)
+            Clown_coord.x, Clown_coord.y = int(coord_x_crown - game.Screen_Width / 4), int(coord_y_crown)
+            if (face[1][0] != 0) or (face[1][1] != 0):
+                pygame.draw.circle(screen, (255,0,0), (face[1][0], face[1][1]), 60)
 
             # Texto Winner/Loser
-            Text(screen, coord_x_crown, coord_y_crown + game.Screen_Height / 3, coord_x_crown - game.Screen_Width / 3.2, coord_y_crown + game.Screen_Height / 2, result)
+            Text(screen, coord_x_crown + game.Screen_Width / 2.8, coord_y_crown + game.Screen_Height / 3, coord_x_crown , coord_y_crown + game.Screen_Height / 2, result)
 
+        screen.blit(Crown, Crown_coord)
         screen.blit(Clown, Clown_coord)
         screen.blit(Tears, Tears_coord)
 
@@ -246,8 +252,8 @@ def winner_screen(screen, in_Winputs, result):
         define_winner(in_Winputs, screen, game.Screen_Width / 5, game.Screen_Height/10, result)
     # Player B Ganha
     else:
-        define_winner(in_Winputs, screen, game.Screen_Width/1.8,  game.Screen_Height/10, result)
-
+        #define_winner(in_Winputs, screen, game.Screen_Width/1.8,  game.Screen_Height/10, result)
+        define_winner(in_Winputs, screen, game.Screen_Width / 5, game.Screen_Height / 10, result)
 
 def showFPS(prev_frame_time, new_frame_time):
     new_frame_time = t.time()

@@ -1,18 +1,12 @@
-from distutils.log import error
-from fileinput import filename
-from msilib.schema import Class
 import time as t
-from turtle import left, right, screensize
 import cv2
-import numpy as np
 import pygame
-# from cvzone.HandTrackingModule import HandDetector
+from cvzone.HandTrackingModule import HandDetector
 from pygame import *
 import myTools as myAux
 import game
 import sys
 import os
-# import utility
 
 import images
 
@@ -42,7 +36,7 @@ gif_size = [scale*600, scale*400]
 state: 0
 
 # Detector
-# detector = HandDetector(detectionCon=0.8, maxHands=2)
+detector = HandDetector(detectionCon=0.8, maxHands=2)
 
 # Images
 screen_size = [(game.Screen_Width - scale*game.Screen_Width)/2, (game.Screen_Height - scale*game.Screen_Height)/2]
@@ -137,7 +131,7 @@ while start:
         # print("Exec Time (main): "+str(round((sum(ctime)/60)/(1000*1000)))+" (ms)")
         ctime.pop(0)
     window.blit(imgBg, rectBg)
-    myAux.transform_cap(img, window, (screen_size[0],screen_size[1]))
+    myAux.transform_cap(img, window, (screen_size[0], screen_size[1]))
 
     # imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     # imgRGB = np.rot90(imgRGB)
@@ -169,11 +163,11 @@ while start:
             if hand != (-1,-1):
                 pygame.draw.circle(window, (191, 39, 28), hand, 15)
             else:
-                if hand != (-1,-1):
+                if hand != (-1, -1):
                     pygame.draw.circle(window, (148, 25, 134), hand, 15)
                 
             if rectPlay.collidepoint(hand[0], hand[1]):
-                game.startgame(window, Winputs)
+                myAux.get_min_max_screen(window, Winputs)
             if rectCam.collidepoint(hand[0], hand[1]):
                 if index != 0:
                     myAux.pic_screen(Winputs, window)
@@ -186,5 +180,4 @@ while start:
     ctime.append(t.time_ns() - ctime_i)
     tcount += 1
 
-cap.release()
 cv2.destroyAllWindows()

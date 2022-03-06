@@ -1,14 +1,9 @@
-from turtle import Screen, screensize
-import cv2
-from pyparsing import White
 import pygame
 from pygame import *
 import myTools as myAux
-from google.protobuf.json_format import MessageToDict
 import pyautogui
 import sys
 import images
-# import utility
 
 pygame.init()
 Screen_Width, Screen_Height = pyautogui.size()
@@ -16,9 +11,10 @@ window = pygame.display.set_mode((Screen_Width, Screen_Height))
 
 # Sounds
 mixer.init()
-Paddle = mixer.Sound("Sounds/Paddle.wav")
-Wall = mixer.Sound("Sounds/Wall.wav")
+#Paddle = mixer.Sound("Sounds/Paddle.wav")
+#Wall = mixer.Sound("Sounds/Wall.wav")
 Score = mixer.Sound("Sounds/Score.wav")
+
 scale = 0.7
 score_size = [scale*250, scale*100]
 
@@ -30,6 +26,7 @@ sep_size = [scale*1920, scale*50]
 imgscore_0, rectscore_0 = images.load_image(file_name='Images/score_0.png',
                                             img_size=score_size,
                                             translation=(-4, 10))
+
 
 imgscore_0_0, rectscore_0_0 = images.load_image(file_name='Images/score_0_0.png',
                                                 img_size=score_size,
@@ -115,8 +112,6 @@ def controller_lim(pos,min,max):
             return min
         else:
             return pos
-
-        
         
 
 def controller_filter(list,val):
@@ -128,14 +123,17 @@ def controller_filter(list,val):
     return sum(list)/len(list)
 
 
-def startgame(screen, in_Winputs):
+def startgame(screen, in_Winputs, Max, Min):
     state: 1
     pygame.time.delay(500)
+
+    # Valores Máximos de Cada Jogador
+    Max_Player, Max_Opponent, = Max
+    Min_Player, Min_Opponent = Min
 
     #####################
     #   GET FIRST FRAME #
     #####################
-
 
     w_original,h_original = pygame.display.get_surface().get_size()
 
@@ -144,9 +142,8 @@ def startgame(screen, in_Winputs):
     #############
     clock = pygame.time.Clock()
 
-    
-    # Winputs = myAux.webcamInputs(vid_stream=in_Winputs.vid_stream,subSampling=0,src=0,scale=0.7,windowRes=(1920,1080),detector='GameHand')
-    Winputs = myAux.webcamInputs(webcamInputs=in_Winputs,vid_stream=in_Winputs.vid_stream,offset=in_Winputs.offset,detector='GameHand')
+    Winputs = myAux.webcamInputs(webcamInputs=in_Winputs, vid_stream=in_Winputs.vid_stream, offset=in_Winputs.offset,
+                                 detector='FaceDetection', subSampling=0)
     # Winputs = myAux.webcamInputs(vid_stream=in_Winputs.vid_stream,subSampling=0,scale=in_Winputs.scale,windowRes=in_Winputs.windowRes,offset=in_Winputs.offset,detector='GameHand')
     # Winputs = myAux.webcamInputs(vid_stream=in_Winputs.vid_stream,subSampling=0,src=0,scale=0.7,windowRes=(1920,1080),offset=in_Winputs.offset,detector='GameHand')
 
@@ -167,7 +164,7 @@ def startgame(screen, in_Winputs):
     playerSpeed = ballSpeed*2
     playerLength = int(h_original/5)
     playerThickness = 30
-    player = pygame.Rect( 0, h_original/2, playerThickness, playerLength )
+    player = pygame.Rect( 0, h_original/2, playerThickness, playerLength)
 
     opponentScore = 0
     opponentSpeed = ballSpeed*2
@@ -241,7 +238,9 @@ def startgame(screen, in_Winputs):
             else:
                 player_y = 100
         else:
-            player_y = hands[1][1]
+            # Normalização Do Y do Player
+            y_norm = (hands[1][1] - Min_Player)/(Max_Player - Min_Player)
+            player_y = hands[1][1] * y_norm
 
         error_player = controller_filter(player_y_list, player_y) - (player.y + playerLength/2)
         command_player = Controller_Kp*error_player
@@ -257,7 +256,9 @@ def startgame(screen, in_Winputs):
                 else:
                     opponent_y = 100
             else:
-                opponent_y = hands[0][1]
+                # Normalização Do Y do Opponent
+                y_norm = (hands[0][1] - Min_Opponent) / (Max_Opponent - Min_Opponent)
+                opponent_y = hands[0][1] * y_norm
 
         error_opponent = controller_filter(opponent_y_list, opponent_y) - (opponent.y + playerLength/2)
         command_opponent = Controller_Kp*error_opponent
@@ -277,21 +278,21 @@ def startgame(screen, in_Winputs):
             ballSpeedX = +ballSpeed
             ball.x += ballSpeedX * deltaTime
             ball.y += ballSpeedY * deltaTime
-            pygame.mixer.Sound.play(Paddle)
+            #pygame.mixer.Sound.play(Paddle)
 
         if ball.colliderect(opponent):
             ballSpeedX = -ballSpeed
             ball.x += ballSpeedX * deltaTime
             ball.y += ballSpeedY * deltaTime
-            pygame.mixer.Sound.play(Paddle)
+            #pygame.mixer.Sound.play(Paddle)
 
         if ball.top <= topBar:
             ballSpeedY = ballSpeed
-            pygame.mixer.Sound.play(Wall)
+            #pygame.mixer.Sound.play(Wall)
 
         if ball.bottom >= h_original:
             ballSpeedY = -ballSpeed
-            pygame.mixer.Sound.play(Wall)
+            #pygame.mixer.Sound.play(Wall)
 
         if ball.left <= 0:
             ballSpeedX = ballSpeed
@@ -299,7 +300,7 @@ def startgame(screen, in_Winputs):
             dtime = 0
             ball.x = w_original/2
             ball.y = h_original/2
-            pygame.mixer.Sound.play(Score)
+            #pygame.mixer.Sound.play(Score)
 
         if ball.right >= w_original:
             ballSpeedX = -ballSpeed
@@ -307,7 +308,7 @@ def startgame(screen, in_Winputs):
             dtime = 0
             ball.x = w_original/2
             ball.y = h_original/2
-            pygame.mixer.Sound.play(Score)
+            #pygame.mixer.Sound.play(Score)
 
         if  opponentScore >= 1:
             myAux.winner_screen(window,in_Winputs, 1)

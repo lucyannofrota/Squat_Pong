@@ -231,7 +231,6 @@ def define_winner(in_Winputs, screen, coord_x_crown, coord_y_crown, result):
                 if Pic_coord.collidepoint(hand[0], hand[1]):
                         TakePic()
                         running = False
-        # print("Tick")
         screen.blit(Pic, Pic_coord)
         pygame.display.update()
         count += 1
@@ -262,7 +261,6 @@ def getNewFrameOpenCV(cap, width, height):
     if not retval:
         return retval, 0, 0, 0, 0
 
-    # frame = cv2.resize(frame,(1080,720))
     h, w, c = frame.shape
     return retval, h, w, c, frame
 
@@ -311,9 +309,11 @@ class webcamInputs:
 
         self.detectorType = detector
 
-        self.l_hands = []
-        self.l_hands.append((-1,-1)) #Left Hand(Opponent)
-        self.l_hands.append((-1,-1)) #Right Hand(Player)
+        self.l_cords = []
+        self.l_cords.append((-1,-1)) #Left Hand(Opponent)
+        self.l_cords.append((-1,-1)) #Right Hand(Player)
+        self.l_cords.append((-1,-1)) #Left Face(Opponent)
+        self.l_cords.append((-1,-1)) #Right Face(Player)
 
         if self.detectorType == 'Menu':
             self.detector = HandDetector(detectionCon=0.8, maxHands=2)
@@ -323,47 +323,57 @@ class webcamInputs:
             mp_drawing = mp.solutions.drawing_utils
             self.detector = mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5)
 
-        else:
-            if self.detectorType == 'GameHand':
-                mp_drawing = mp.solutions.drawing_utils
-                mp_drawing_styles = mp.solutions.drawing_styles
-                self.mp_hands = mp.solutions.hands
-                self.detector = self.mp_hands.Hands(model_complexity=0, min_detection_confidence=0.3, min_tracking_confidence=0.3)
+        elif self.detectorType == 'GameHand':
+            mp_drawing = mp.solutions.drawing_utils
+            mp_drawing_styles = mp.solutions.drawing_styles
+            self.mp_hands = mp.solutions.hands
+            self.detector = self.mp_hands.Hands(model_complexity=0, min_detection_confidence=0.3, min_tracking_confidence=0.3)
+        elif self.detectorType == 'FaceHand':
+            self.detector = []
+
+            mp_drawing = mp.solutions.drawing_utils
+            mp_drawing_styles = mp.solutions.drawing_styles
+            self.mp_hands = mp.solutions.hands
+
+            self.detector.append(self.mp_hands.Hands(model_complexity=0, min_detection_confidence=0.3, min_tracking_confidence=0.3))
+
+            mp_face_detection = mp.solutions.face_detection
+            mp_drawing = mp.solutions.drawing_utils
+
+            self.detector.append(mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5))
+
 
         self.subSampCounter = self.subSampling
 
         self.l_frame = []
         self.l_detected = []
 
-    # def GameHand():
+    def reset_cords(self):
+        for i in range(len(self.l_cords)):
+            self.l_cords[i] = (-1,-1)
 
+    def get_inputs(self,frame=[]):
+        if(self.subSampCounter <= (self.subSampling-1) or self.l_frame == [] or frame != []):
+            if frame == []:
+                frame = self.vid_stream.read()
 
-    def get_inputs(self):
-        if(self.subSampCounter <= (self.subSampling-1) or self.l_frame == []):
-            frame = self.vid_stream.read()
+            self.reset_cords()
 
             if self.detectorType == 'Menu':
                 frame = cv2.flip(frame, 1)
                 hands, frame = self.detector.findHands(frame, flipType=False)
 
-                self.l_hands[0] = (-1,-1)
-                self.l_hands[1] = (-1,-1)
                 if hands:
                     for hand in hands:
                         x, y, c = hand['lmList'][8]
                         if hand['type'] == 'Left':
-                            self.l_hands[0] = (x*self.hscale[0]+self.offset[0], y*self.hscale[1]+self.offset[1])
+                            self.l_cords[0] = (x*self.hscale[0]+self.offset[0], y*self.hscale[1]+self.offset[1])
                         else:
-                            self.l_hands[1] = (x*self.hscale[0]+self.offset[0], y*self.hscale[1]+self.offset[1])
+                            self.l_cords[1] = (x*self.hscale[0]+self.offset[0], y*self.hscale[1]+self.offset[1])
 
             elif self.detectorType == 'FaceDetection':
-                frame.flags.writeable = False
-                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                results = self.detector.process(frame)
-                frame_rows, frame_cols, _ = frame.shape
-
-                frame.flags.writeable = True
-                frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+                frameCV_RGB = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                results = self.detector.process(frameCV_RGB)
 
                 if results.detections:
                     for detection in results.detections:
@@ -378,37 +388,77 @@ class webcamInputs:
                             x, y = self.outRes[0] - int(kp.x * self.outRes[0]) + self.offset[0], int(
                                 kp.y * self.outRes[1]) + self.offset[1]
                             if kp.x >= 0.5:
-                                self.l_hands[1] = (x, y)
-                                self.l_hands[0] = (-1,-1)
-                                #cv2.circle(frame, kp, circle_radius, Opponent_color, thickness)
+                                self.l_cords[1] = (x, y)
                             else:
-                                self.l_hands[0] = (x, y)
-                                self.l_hands[1] = (-1, -1)
-                                #cv2.circle(frame, kp, circle_radius, Player_color, thickness)
+                                self.l_cords[0] = (x, y)
 
-            else:
-                if self.detectorType == 'GameHand':
-                    frameCV_RGB = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            elif self.detectorType == 'GameHand':
+                frameCV_RGB = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-                    results = self.detector.process(frameCV_RGB) # convert from BGR to RGB
-                    if results.multi_hand_landmarks is not None:
-                        # EACH HAND #
-                        for handLms, handedness in zip(results.multi_hand_landmarks, results.multi_handedness):
-                            handedness_dict1 = MessageToDict(handedness)
-                            # RIGHT HAND  #
-                            if handedness_dict1['classification'][0]['label'] == 'Right':
-                                # EACH POINTS OF THE HAND #
-                                for id, lm in enumerate(handLms.landmark):
-                                    if id == self.mp_hands.HandLandmark.INDEX_FINGER_TIP:
-                                        x, y = self.outRes[0]-int(lm.x*self.outRes[0])+self.offset[0], int(lm.y*self.outRes[1])+self.offset[1]
-                                        self.l_hands[1] = (x,y)
-                            # LEFT HAND #
-                            if handedness_dict1['classification'][0]['label'] == 'Left':
-                                # EACH POINTS OF THE HAND #
-                                for id, lm in enumerate(handLms.landmark):
-                                    if id == self.mp_hands.HandLandmark.INDEX_FINGER_TIP:
-                                        x, y = self.outRes[0]-int(lm.x*self.outRes[0])+self.offset[0], int(lm.y*self.outRes[1])+self.offset[1]
-                                        self.l_hands[0] = (x,y)
+                results = self.detector.process(frameCV_RGB) # convert from BGR to RGB
+                if results.multi_hand_landmarks is not None:
+                    # EACH HAND #
+                    for handLms, handedness in zip(results.multi_hand_landmarks, results.multi_handedness):
+                        handedness_dict1 = MessageToDict(handedness)
+                        # RIGHT HAND  #
+                        if handedness_dict1['classification'][0]['label'] == 'Right':
+                            # EACH POINTS OF THE HAND #
+                            for id, lm in enumerate(handLms.landmark):
+                                if id == self.mp_hands.HandLandmark.INDEX_FINGER_TIP:
+                                    x, y = self.outRes[0]-int(lm.x*self.outRes[0])+self.offset[0], int(lm.y*self.outRes[1])+self.offset[1]
+                                    self.l_cords[1] = (x,y)
+                        # LEFT HAND #
+                        if handedness_dict1['classification'][0]['label'] == 'Left':
+                            # EACH POINTS OF THE HAND #
+                            for id, lm in enumerate(handLms.landmark):
+                                if id == self.mp_hands.HandLandmark.INDEX_FINGER_TIP:
+                                    x, y = self.outRes[0]-int(lm.x*self.outRes[0])+self.offset[0], int(lm.y*self.outRes[1])+self.offset[1]
+                                    self.l_cords[0] = (x,y)
+
+            elif self.detectorType == 'FaceHand':
+                self.reset_cords()
+                frameCV_RGB = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+                results = self.detector[0].process(frameCV_RGB) # convert from BGR to RGB
+                if results.multi_hand_landmarks is not None:
+                    # EACH HAND #
+                    for handLms, handedness in zip(results.multi_hand_landmarks, results.multi_handedness):
+                        handedness_dict1 = MessageToDict(handedness)
+                        # RIGHT HAND  #
+                        if handedness_dict1['classification'][0]['label'] == 'Right':
+                            # EACH POINTS OF THE HAND #
+                            for id, lm in enumerate(handLms.landmark):
+                                if id == self.mp_hands.HandLandmark.INDEX_FINGER_TIP:
+                                    x, y = self.outRes[0]-int(lm.x*self.outRes[0])+self.offset[0], int(lm.y*self.outRes[1])+self.offset[1]
+                                    self.l_cords[1] = (x,y)
+                        # LEFT HAND #
+                        if handedness_dict1['classification'][0]['label'] == 'Left':
+                            # EACH POINTS OF THE HAND #
+                            for id, lm in enumerate(handLms.landmark):
+                                if id == self.mp_hands.HandLandmark.INDEX_FINGER_TIP:
+                                    x, y = self.outRes[0]-int(lm.x*self.outRes[0])+self.offset[0], int(lm.y*self.outRes[1])+self.offset[1]
+                                    self.l_cords[0] = (x,y)
+
+                                frameCV_RGB = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                results = self.detector[1].process(frameCV_RGB)
+
+                if results.detections:
+                    for detection in results.detections:
+                        # Indice 0: Olho Direito
+                        # Indice 1: Olho Esquerdo
+                        # Indice 2: Nariz
+                        # Indice 3: Meio da Boca
+                        # Indice 4: Ouvido Direito
+                        # Indice 5: Olho
+                        kp = detection.location_data.relative_keypoints[2]
+                        if kp is not None:
+                            x, y = self.outRes[0] - int(kp.x * self.outRes[0]) + self.offset[0], int(
+                                kp.y * self.outRes[1]) + self.offset[1]
+                            if kp.x >= 0.5:
+                                self.l_cords[3] = (x, y)
+                            else:
+                                self.l_cords[2] = (x, y)
+
 
             frame = cv2.resize(frame, (self.outRes[0], self.outRes[1]), interpolation=cv2.INTER_AREA)
             self.l_frame = frame
@@ -416,16 +466,13 @@ class webcamInputs:
 
         self.subSampCounter -= 1
 
-        if self.detectorType == 'Menu':
-            return self.l_frame, self.l_hands
-        elif self.detectorType == 'FaceDetection':
+
+
+        if self.detectorType != 'Menu':
             self.l_frame = frameCV2Py(self.l_frame)
-            return self.l_frame, self.l_hands
-        else:
-            if self.detectorType == 'GameHand':
-                #  GET NEW BACKGROUND  #
-                self.l_frame = frameCV2Py(self.l_frame)
-                return self.l_frame, self.l_hands
+
+
+        return self.l_frame, self.l_cords 
 
 
 def get_min_max_screen(screen, in_Winputs):
@@ -435,10 +482,10 @@ def get_min_max_screen(screen, in_Winputs):
                                  detector='FaceDetection', subSampling=0)
 
     # Coordenada (0,0) no Topo Esquerdo
-    Max_Player = 0
-    Max_Opponent = 0               # Máximo que se Pode Obter no Ecrã: Screen_Height
-    Min_Player = Screen_Height
-    Min_Opponent = Screen_Height   # Mínimo que se Obter no Ecrã: 0
+    Max_Player = -1
+    Max_Opponent = -1               # Máximo que se Pode Obter no Ecrã: Screen_Height
+    Min_Player = -1
+    Min_Opponent = -1   # Mínimo que se Obter no Ecrã: 0
 
     running = True
     start_time = t.time()
@@ -463,30 +510,32 @@ def get_min_max_screen(screen, in_Winputs):
         # PROCESS DATA  #
         #################
         raio_bola = 15
-        if face[1][1] != -1:
+        if face[1][1] > 0:
 
-            if face[1][1] > Max_Player:
+            if face[1][1] > Max_Player or Max_Player == -1:
                 Max_Player = face[1][1]
-            if face[1][1] < Min_Player:
+            if face[1][1] < Min_Player or Min_Player == -1:
                 Min_Player = face[1][1]
 
-            left = pygame.draw.circle(screen, game.Player_color, (face[1][0], face[1][1]), raio_bola)
+            if face[1][0] > 0:
+                left = pygame.draw.circle(screen, game.Player_color, (face[1][0], face[1][1]), raio_bola)
 
-        if face[0][1] != -1:
+        if face[0][1] > 0:
 
-            if face[0][1] > Max_Player:
-                Max_Player = face[0][1]
-            if face[0][1] < Min_Player:
-                Min_Player = face[0][1]
+            if face[0][1] > Max_Opponent or Max_Opponent == -1:
+                Max_Opponent = face[0][1]
+            if face[0][1] < Min_Opponent or Min_Opponent == -1:
+                Min_Opponent = face[0][1]
 
-            right = pygame.draw.circle(screen, game.Opponent_color, (face[0][0], face[0][1]), raio_bola)
+            if face[0][0] > 0:
+                right = pygame.draw.circle(screen, game.Opponent_color, (face[0][0], face[0][1]), raio_bola)
 
         end_time = t.time()
         # Flip the display
         pygame.display.flip()
         pygame.display.update()
 
-        #Counter de 20 Segundos
+        #Counter de 10 Segundos
         if int(end_time-start_time) >= 10:
 
             # --------------------------- Não Participam No Teste ---------------------
@@ -505,6 +554,8 @@ def get_min_max_screen(screen, in_Winputs):
 
             Max = [Max_Player, Max_Opponent]
             Min = [Min_Player, Min_Opponent]
+            print("Max",Max)
+            print("Min",Min)
             game.startgame(screen, in_Winputs, Max, Min)
             return
 

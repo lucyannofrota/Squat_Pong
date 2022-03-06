@@ -247,13 +247,7 @@ def define_winner(in_Winputs, screen, coord_x_crown, coord_y_crown, result):
 
 
 def winner_screen(screen, in_Winputs, result):
-    # Player A Ganha
-    if result == 1:
         define_winner(in_Winputs, screen, game.Screen_Width / 5, game.Screen_Height/10, result)
-    # Player B Ganha
-    else:
-        #define_winner(in_Winputs, screen, game.Screen_Width/1.8,  game.Screen_Height/10, result)
-        define_winner(in_Winputs, screen, game.Screen_Width / 5, game.Screen_Height / 10, result)
 
 def showFPS(prev_frame_time, new_frame_time):
     new_frame_time = t.time()

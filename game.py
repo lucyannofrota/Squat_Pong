@@ -144,7 +144,8 @@ def startgame(screen, in_Winputs, Max, Min):
 
     Winputs = myAux.webcamInputs(webcamInputs=in_Winputs, vid_stream=in_Winputs.vid_stream, offset=in_Winputs.offset,
                                  detector='FaceDetection', subSampling=0)
-    # Winputs = myAux.webcamInputs(vid_stream=in_Winputs.vid_stream,subSampling=0,scale=in_Winputs.scale,windowRes=in_Winputs.windowRes,offset=in_Winputs.offset,detector='GameHand')
+
+    Winputs_Hands = myAux.webcamInputs(vid_stream=in_Winputs.vid_stream,subSampling=0,scale=in_Winputs.scale,windowRes=in_Winputs.windowRes,offset=in_Winputs.offset,detector='GameHand')
     # Winputs = myAux.webcamInputs(vid_stream=in_Winputs.vid_stream,subSampling=0,src=0,scale=0.7,windowRes=(1920,1080),offset=in_Winputs.offset,detector='GameHand')
 
     #############
@@ -206,7 +207,8 @@ def startgame(screen, in_Winputs, Max, Min):
         #   GET NEW FRAME   #
         #####################
         # (retval, frameHeight, frameWidth, frameChannels, frameCV) = myAux.getNewFrameOpenCV(camera, Screen_Width, Screen_Height)
-        frameCV, hands = Winputs.get_inputs()
+        frameCV, face = Winputs.get_inputs()
+        frameCV, hands = Winputs_Hands.get_inputs()
         # frameCV_RGB = cv2.cvtColor(frameCV, cv2.COLOR_BGR2RGB)
 
 
@@ -221,26 +223,26 @@ def startgame(screen, in_Winputs, Max, Min):
         #################
         # PROCESS DATA  #
         #################
-        if hands[1][1] != -1:
+        if face[1][1] != -1:
             raio_bola_left = 15
-            left = pygame.draw.circle(screen, Player_color, (hands[1][0], hands[1][1]), raio_bola_left)
+            left = pygame.draw.circle(screen, Player_color, (face[1][0], face[1][1]), raio_bola_left)
 
-        if hands[0][1] != -1:
+        if face[0][1] != -1:
             raio_bola_right = 15
-            right = pygame.draw.circle(screen, Opponent_color, (hands[0][0], hands[0][1]), raio_bola_right)
+            right = pygame.draw.circle(screen, Opponent_color, (face[0][0], face[0][1]), raio_bola_right)
 
         #########################
         #   PLAYER CONTROLLERS  #
         #########################
-        if hands[1][1] == -1:
+        if face[1][1] == -1:
             if len(player_y_list) != 0:
                 player_y = player_y_list[len(player_y_list)-1]
             else:
                 player_y = 100
         else:
             # Normalização Do Y do Player
-            y_norm = (hands[1][1] - Min_Player)/(Max_Player - Min_Player)
-            player_y = hands[1][1] * y_norm
+            y_norm = (face[1][1] - Min_Player)/(Max_Player - Min_Player)
+            player_y = face[1][1] * y_norm
 
         error_player = controller_filter(player_y_list, player_y) - (player.y + playerLength/2)
         command_player = Controller_Kp*error_player
@@ -250,15 +252,15 @@ def startgame(screen, in_Winputs, Max, Min):
         #   OPPONENT CONTROLLERS    #
         #############################
         if multiplayer:
-            if hands[0][1] == -1:
+            if face[0][1] == -1:
                 if len(opponent_y_list) != 0:
                     opponent_y = opponent_y_list[len(opponent_y_list)-1]
                 else:
                     opponent_y = 100
             else:
                 # Normalização Do Y do Opponent
-                y_norm = (hands[0][1] - Min_Opponent) / (Max_Opponent - Min_Opponent)
-                opponent_y = hands[0][1] * y_norm
+                y_norm = (face[0][1] - Min_Opponent) / (Max_Opponent - Min_Opponent)
+                opponent_y = face[0][1] * y_norm
 
         error_opponent = controller_filter(opponent_y_list, opponent_y) - (opponent.y + playerLength/2)
         command_opponent = Controller_Kp*error_opponent

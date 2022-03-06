@@ -186,9 +186,9 @@ def define_winner(in_Winputs, screen, coord_x_crown, coord_y_crown, result):
                                         translation=(0,0),
                                         resize=1)
 
-        Joker, Joker_coord = load_image(file_name='Images/joker.png',
-                                        img_size=(450,400),
-                                        translation=(0,0),
+        Clown, Clown_coord = load_image(file_name='Images/ClownWig.png',
+                                        img_size=(1500,400),
+                                        translation=(Screen_Width / 2,0),
                                         resize=1)
 
         Tears, Tears_coord = load_image(file_name='Images/tears.png',
@@ -204,20 +204,20 @@ def define_winner(in_Winputs, screen, coord_x_crown, coord_y_crown, result):
         screen.blit(Crown, Crown_coord)
 
         if result == 1:
-            Joker_coord.x, Joker_coord.y = int(coord_x_crown + 0.7*game.Screen_Width / 2.1), int(coord_y_crown)
+            Clown_coord.x, Clown_coord.y = int(coord_x_crown + game.Screen_Width / 20), int(coord_y_crown)
             Tears_coord.x, Tears_coord.y = int(coord_x_crown + 0.7*game.Screen_Width / 2.1), int(coord_y_crown + 0.8* game.Screen_Height / 2.2)
 
             #Texto Winner/Loser
             Text(screen, coord_x_crown, coord_y_crown + game.Screen_Height / 3, coord_x_crown + game.Screen_Width / 3.2, coord_y_crown + game.Screen_Height / 2, result)
         else:
 
-            Joker_coord.x, Joker_coord.y = int(coord_x_crown - 0.7*game.Screen_Width / 1.9), int(coord_y_crown)
+            Clown_coord.x, Clown_coord.y = int(coord_x_crown + game.Screen_Width / 20), int(coord_y_crown)
             Tears_coord.x, Tears_coord.y = int(coord_x_crown - 0.7*game.Screen_Width / 1.9), int(coord_y_crown + 0.8*game.Screen_Height / 2.2)
 
             # Texto Winner/Loser
             Text(screen, coord_x_crown, coord_y_crown + game.Screen_Height / 3, coord_x_crown - game.Screen_Width / 3.2, coord_y_crown + game.Screen_Height / 2, result)
 
-        screen.blit(Joker, Joker_coord)
+        screen.blit(Clown, Clown_coord)
         screen.blit(Tears, Tears_coord)
 
         if hands:
@@ -506,6 +506,7 @@ def get_min_max_screen(screen, in_Winputs):
             Max = [Max_Player, Max_Opponent]
             Min = [Min_Player, Min_Opponent]
             game.startgame(screen, in_Winputs, Max, Min)
+            return
 
 
 

@@ -9,7 +9,7 @@ pygame.init()
 Screen_Width, Screen_Height = pyautogui.size()
 window = pygame.display.set_mode((Screen_Width, Screen_Height))
 
-final_score = 13
+final_score = 3
 
 # Sounds
 mixer.init()

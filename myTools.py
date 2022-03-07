@@ -152,8 +152,8 @@ def Text(screen, winner_x, winner_y, loser_x, loser_y, result):
 
     screen.blit(Winner, (winner_x + Screen_Width / 30, winner_y + Screen_Height / 4.2))
     if result != 1:
-        screen.blit(Loser, (loser_x + Screen_Width / 120, loser_y + Screen_Height / 13))
-    else:
+        screen.blit(Loser, (loser_x + Screen_Width / 12, loser_y + Screen_Height / 13)) # ok
+    elif result == 1:
         screen.blit(Loser, (loser_x + Screen_Width / 12, loser_y + Screen_Height / 13)) # OK
 
 
@@ -208,7 +208,7 @@ def define_winner(in_Winputs, screen, coord_x_crown, coord_y_crown, result):
             Clown_coord.x, Clown_coord.y = int(coord_x_crown + game.Screen_Width / 20), int(coord_y_crown)
             Tears_coord.x, Tears_coord.y = int(coord_x_crown + 0.7*game.Screen_Width / 2.1), int(coord_y_crown + 0.8* game.Screen_Height / 2.2)
             if (face[0][0] != 0) or (face[0][1] != 0):
-                pygame.draw.circle(screen, (255, 0, 0), (face[0][0], face[0][1]), 60)
+                pygame.draw.circle(screen, (255, 0, 0), (face[0][0], face[0][1]), 40)
 
             #Texto Winner/Loser
             Text(screen, coord_x_crown, coord_y_crown + game.Screen_Height / 3, coord_x_crown + game.Screen_Width / 3.2, coord_y_crown + game.Screen_Height / 2, result)
@@ -217,7 +217,7 @@ def define_winner(in_Winputs, screen, coord_x_crown, coord_y_crown, result):
             Tears_coord.x, Tears_coord.y = int(coord_x_crown + game.Screen_Width / 40), int(coord_y_crown + Screen_Height / 3)
             Clown_coord.x, Clown_coord.y = int(coord_x_crown - game.Screen_Width / 4), int(coord_y_crown)
             if (face[1][0] != 0) or (face[1][1] != 0):
-                pygame.draw.circle(screen, (255,0,0), (face[1][0], face[1][1]), 60)
+                pygame.draw.circle(screen, (255,0,0), (face[1][0], face[1][1]), 40)
 
             # Texto Winner/Loser
             Text(screen, coord_x_crown + game.Screen_Width / 2.8, coord_y_crown + game.Screen_Height / 3, coord_x_crown , coord_y_crown + game.Screen_Height / 2, result)

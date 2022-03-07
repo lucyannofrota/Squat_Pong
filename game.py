@@ -333,7 +333,7 @@ def startgame(screen, in_Winputs, Max, Min):
             return
 
         if  playerScore >= final_score:
-            myAux.winner_screen(window, in_Winputs, 2)
+            myAux.winner_screen(window, in_Winputs, 0)
             pygame.display.update()
             pygame.event.pump()
             pygame.time.delay(1500)

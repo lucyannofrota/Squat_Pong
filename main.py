@@ -154,23 +154,25 @@ while start:
     gifSquat_Right.draw(window)
     gifSquat_Left.draw(window)
     if hands:
-        for hand in hands:
+        if (hands[0][0] > 0) and (hands[0][1] > 0):
+            pygame.draw.circle(window, (191, 39, 28), hands[0], 15)
+        if (hands[1][0] > 0) and (hands[1][1] > 0):
+            pygame.draw.circle(window, (148, 25, 134), hands[1], 15)
+        for i in range(2):
+            if rectPlay.collidepoint(hands[i][0], hands[i][1]):
+                myAux.get_min_max_screen(window, Winputs)
+                break
+            if rectCam.collidepoint(hands[i][0], hands[i][1]):
+                if index != 0:
+                    myAux.pic_screen(Winputs, window)
+                    break
+        # for hand in hands:
             # x, y, c = hand['lmList'][8]
 
             # x = hscale[0]*x
             # y = hscale[1]*y
 
-            if hand != (-1,-1):
-                pygame.draw.circle(window, (191, 39, 28), hand, 15)
-            else:
-                if hand != (-1, -1):
-                    pygame.draw.circle(window, (148, 25, 134), hand, 15)
-                
-            if rectPlay.collidepoint(hand[0], hand[1]):
-                myAux.get_min_max_screen(window, Winputs)
-            if rectCam.collidepoint(hand[0], hand[1]):
-                if index != 0:
-                    myAux.pic_screen(Winputs, window)
+            
 
     # Update Display
     pygame.display.update()

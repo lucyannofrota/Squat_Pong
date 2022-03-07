@@ -9,6 +9,8 @@ pygame.init()
 Screen_Width, Screen_Height = pyautogui.size()
 window = pygame.display.set_mode((Screen_Width, Screen_Height))
 
+final_score = 13
+
 # Sounds
 mixer.init()
 #Paddle = mixer.Sound("Sounds/Paddle.wav")
@@ -142,10 +144,11 @@ def startgame(screen, in_Winputs, Max, Min):
     #############
     clock = pygame.time.Clock()
 
-    Winputs = myAux.webcamInputs(webcamInputs=in_Winputs, vid_stream=in_Winputs.vid_stream, offset=in_Winputs.offset,
-                                 detector='FaceDetection', subSampling=0)
-
-    Winputs_Hands = myAux.webcamInputs(vid_stream=in_Winputs.vid_stream,subSampling=0,scale=in_Winputs.scale,windowRes=in_Winputs.windowRes,offset=in_Winputs.offset,detector='GameHand')
+    
+    # Winputs = myAux.webcamInputs(vid_stream=in_Winputs.vid_stream,subSampling=0,src=0,scale=0.7,windowRes=(1920,1080),detector='GameHand')
+    Winputs = myAux.webcamInputs(webcamInputs=in_Winputs,vid_stream=in_Winputs.vid_stream,offset=in_Winputs.offset,subSampling=in_Winputs.subSampling,detector='FaceHand')
+    # Winputs_Hands = myAux.webcamInputs(webcamInputs=in_Winputs,vid_stream=in_Winputs.vid_stream,offset=in_Winputs.offset,subSampling=in_Winputs.subSampling,detector='GameHand')
+    # Winputs = myAux.webcamInputs(vid_stream=in_Winputs.vid_stream,subSampling=0,scale=in_Winputs.scale,windowRes=in_Winputs.windowRes,offset=in_Winputs.offset,detector='GameHand')
     # Winputs = myAux.webcamInputs(vid_stream=in_Winputs.vid_stream,subSampling=0,src=0,scale=0.7,windowRes=(1920,1080),offset=in_Winputs.offset,detector='GameHand')
 
     #############
@@ -187,6 +190,12 @@ def startgame(screen, in_Winputs, Max, Min):
     #############
     getTicksLastFrame = pygame.time.get_ticks()
     running = True
+    hands = []
+    hands.append((-1,-1))
+    hands.append((-1,-1))
+    faces = []
+    faces.append((-1,-1))
+    faces.append((-1,-1))
     while running:
         window.fill((0, 0, 0))
         event()
@@ -206,43 +215,47 @@ def startgame(screen, in_Winputs, Max, Min):
         #####################
         #   GET NEW FRAME   #
         #####################
-        # (retval, frameHeight, frameWidth, frameChannels, frameCV) = myAux.getNewFrameOpenCV(camera, Screen_Width, Screen_Height)
-        frameCV, face = Winputs.get_inputs()
-        frameCV, hands = Winputs_Hands.get_inputs()
-        # frameCV_RGB = cv2.cvtColor(frameCV, cv2.COLOR_BGR2RGB)
+        frameCV, cords = Winputs.get_inputs()
+        hands[0] = cords[0]
+        hands[1] = cords[1]
+        faces[0] = cords[2]
+        faces[1] = cords[3]
 
 
         #########################
         #   GET NEW BACKGROUND  #
         #########################
-        # framePy = myAux.frameCV2Py(frameCV)
-        # print(Winputs.offset)
         window.blit(imgBg, rectBg)
         screen.blit(frameCV, Winputs.offset)
 
         #################
         # PROCESS DATA  #
         #################
-        if face[1][1] != -1:
+        if hands[1] != (-1,-1):
             raio_bola_left = 15
-            left = pygame.draw.circle(screen, Player_color, (face[1][0], face[1][1]), raio_bola_left)
-
-        if face[0][1] != -1:
+            leftHand = pygame.draw.circle(screen, Opponent_color, (hands[1][0], hands[1][1]), raio_bola_left)
+        if hands[0] != (-1,-1):
             raio_bola_right = 15
-            right = pygame.draw.circle(screen, Opponent_color, (face[0][0], face[0][1]), raio_bola_right)
+            rightHand = pygame.draw.circle(screen, Player_color, (hands[0][0], hands[0][1]), raio_bola_right)
+        # if faces[1][1] != -1:
+        #     raio_bola_left = 15
+        #     leftFace = pygame.draw.circle(screen, Player_color, (faces[1][0], faces[1][1]), raio_bola_left)
+        # if faces[0][1] != -1:
+        #     raio_bola_right = 15
+        #     rightFace = pygame.draw.circle(screen, Opponent_color, (faces[0][0], faces[0][1]), raio_bola_right)
 
         #########################
         #   PLAYER CONTROLLERS  #
         #########################
-        if face[1][1] == -1:
+        if faces[1][1] == -1:
             if len(player_y_list) != 0:
                 player_y = player_y_list[len(player_y_list)-1]
             else:
                 player_y = 100
         else:
             # Normalização Do Y do Player
-            y_norm = (face[1][1] - Min_Player)/(Max_Player - Min_Player)
-            player_y = face[1][1] * y_norm
+            y_norm = (faces[1][1] - Min_Player)/(Max_Player - Min_Player)
+            player_y = faces[1][1]* y_norm
 
         error_player = controller_filter(player_y_list, player_y) - (player.y + playerLength/2)
         command_player = Controller_Kp*error_player
@@ -252,15 +265,15 @@ def startgame(screen, in_Winputs, Max, Min):
         #   OPPONENT CONTROLLERS    #
         #############################
         if multiplayer:
-            if face[0][1] == -1:
+            if faces[0][1] == -1:
                 if len(opponent_y_list) != 0:
                     opponent_y = opponent_y_list[len(opponent_y_list)-1]
                 else:
                     opponent_y = 100
             else:
                 # Normalização Do Y do Opponent
-                y_norm = (face[0][1] - Min_Opponent) / (Max_Opponent - Min_Opponent)
-                opponent_y = face[0][1] * y_norm
+                y_norm = (faces[0][1] - Min_Opponent) / (Max_Opponent - Min_Opponent)
+                opponent_y = faces[0][1] * y_norm
 
         error_opponent = controller_filter(opponent_y_list, opponent_y) - (opponent.y + playerLength/2)
         command_opponent = Controller_Kp*error_opponent
@@ -312,14 +325,14 @@ def startgame(screen, in_Winputs, Max, Min):
             ball.y = h_original/2
             #pygame.mixer.Sound.play(Score)
 
-        if  opponentScore >= 1:
+        if  opponentScore >= final_score:
             myAux.winner_screen(window,in_Winputs, 1)
             pygame.display.update()
             pygame.event.pump()
             pygame.time.delay(1500)
             return
 
-        if  playerScore >= 1:
+        if  playerScore >= final_score:
             myAux.winner_screen(window, in_Winputs, 2)
             pygame.display.update()
             pygame.event.pump()
